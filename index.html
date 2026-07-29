@@ -590,49 +590,70 @@
                 let car = row['Car Model'] || 'Unknown';
                 let driver = row['Driver Name'] || 'Unknown';
                 let km = parseFloat(row['Total KM'] || 0);
+
                 carCounts[car] = (carCounts[car] || 0) + 1;
                 driverKm[driver] = (driverKm[driver] || 0) + km;
             });
 
-            let carCtx = document.getElementById('carChart').getContext('2d');
-            if (carChartInstance) carChartInstance.destroy();
-            carChartInstance = new Chart(carCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(carCounts),
-                    datasets: [{ data: Object.values(carCounts), backgroundColor: ['#2563eb', '#16a34a', '#d97706', '#9333ea', '#ef4444', '#06b6d4'] }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-            });
+            // Render Car Chart
+            let carLabels = Object.keys(carCounts);
+            let carValues = Object.values(carCounts);
 
-            let driverCtx = document.getElementById('driverChart').getContext('2d');
-            if (driverChartInstance) driverChartInstance.destroy();
-            driverChartInstance = new Chart(driverCtx, {
+            if (carChartInstance) carChartInstance.destroy();
+            let ctxCar = document.getElementById('carChart').getContext('2d');
+            carChartInstance = new Chart(ctxCar, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(driverKm),
-                    datasets: [{ label: 'Total KM Driven', data: Object.values(driverKm), backgroundColor: '#2563eb', borderRadius: 6 }]
+                    labels: carLabels,
+                    datasets: [{
+                        label: 'Trips',
+                        data: carValues,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
+                    }]
                 },
                 options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+
+            // Render Driver Chart
+            let driverLabels = Object.keys(driverKm);
+            let driverValues = Object.values(driverKm);
+
+            if (driverChartInstance) driverChartInstance.destroy();
+            let ctxDriver = document.getElementById('driverChart').getContext('2d');
+            driverChartInstance = new Chart(ctxDriver, {
+                type: 'doughnut',
+                data: {
+                    labels: driverLabels,
+                    datasets: [{
+                        data: driverValues,
+                        backgroundColor: ['#2563eb', '#16a34a', '#d97706', '#06b6d4', '#9333ea', '#ef4444']
+                    }]
+                },
+                options: { responsive: true }
             });
         }
 
         function exportToCSV() {
-            let dataToExport = filteredDataCache.length > 0 ? filteredDataCache : allTripsData;
-            if (dataToExport.length === 0) { showToast("No data available to export!", "error"); return; }
-            let keys = Object.keys(dataToExport[0]);
-            let csvContent = "data:text/csv;charset=utf-8," + [
-                keys.join(","),
-                ...dataToExport.map(row => keys.map(k => `"${(row[k] || '').toString().replace(/"/g, '""')}"`).join(","))
-            ].join("\n");
+            if (filteredDataCache.length === 0) {
+                showToast("No data available to export!", "error");
+                return;
+            }
+            let csv = [];
+            let keys = Object.keys(filteredDataCache[0]);
+            csv.push(keys.join(','));
 
-            let encodedUri = encodeURI(csvContent);
-            let link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Tours_Travels_Report.csv");
-            document.body.appendChild(link);
+            filteredDataCache.forEach(row => {
+                let values = keys.map(key => `"${(row[key] || '').toString().replace(/"/g, '""')}"`);
+                csv.push(values.join(','));
+            });
+
+            let blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Tours_Travels_Report_${new Date().toISOString().slice(0,10)}.csv`;
             link.click();
-            document.body.removeChild(link);
+            showToast("Excel (CSV) Exported Successfully! 📊", "success");
         }
 
         function exportToPDF() {
