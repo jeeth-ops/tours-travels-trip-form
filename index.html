@@ -29,7 +29,7 @@
             text-align: center;
             font-weight: 600;
             margin-bottom: 20px;
-            border: 1px silver #6ee7b7;
+            border: 1px solid #6ee7b7;
         }
 
         /* Responsive Grid Layout for Tablet & Desktop */
@@ -207,6 +207,19 @@
 </div>
 
 <script>
+    // Page load hote hi saved data wapas load karna
+    window.onload = function() {
+        if (localStorage.getItem('savedDriverName')) {
+            document.getElementById('driverName').value = localStorage.getItem('savedDriverName');
+        }
+        if (localStorage.getItem('savedAssignedBy')) {
+            document.getElementById('assignedBy').value = localStorage.getItem('savedAssignedBy');
+        }
+        if (localStorage.getItem('savedCarModel')) {
+            document.getElementById('carModel').value = localStorage.getItem('savedCarModel');
+        }
+    };
+
     // Auto calculate Total KM
     function calculateKm() {
         let start = parseFloat(document.getElementById('startKm').value) || 0;
@@ -221,9 +234,19 @@
         document.getElementById('otCharges').value = hours * 90;
     }
 
-    // Convert image to Base64 and send to Google Sheet Web App
+    // Convert image to Base64 and send directly to Google Sheet Web App
     function submitForm(event) {
         event.preventDefault();
+        
+        let driverName = document.getElementById('driverName').value;
+        let assignedBy = document.getElementById('assignedBy').value;
+        let carModel = document.getElementById('carModel').value;
+
+        // Save to browser memory so driver doesn't need to re-type
+        localStorage.setItem('savedDriverName', driverName);
+        localStorage.setItem('savedAssignedBy', assignedBy);
+        localStorage.setItem('savedCarModel', carModel);
+
         document.getElementById('submitBtn').style.display = 'none';
         document.getElementById('loadingText').style.display = 'block';
         document.getElementById('successBanner').style.display = 'none';
@@ -235,9 +258,9 @@
             toBase64(fileInputEnd, function(endImgBase64, endName) {
                 
                 const data = {
-                    driverName: document.getElementById('driverName').value,
+                    driverName: driverName,
                     tripDate: document.getElementById('tripDate').value,
-                    carModel: document.getElementById('carModel').value,
+                    carModel: carModel,
                     startDest: document.getElementById('startDest').value,
                     endDest: document.getElementById('endDest').value,
                     startKm: document.getElementById('startKm').value,
@@ -248,7 +271,7 @@
                     otHours: document.getElementById('otHours').value,
                     otCharges: document.getElementById('otCharges').value,
                     tollParking: document.getElementById('tollParking').value,
-                    assignedBy: document.getElementById('assignedBy').value,
+                    assignedBy: assignedBy,
                     timeDetails: document.getElementById('timeDetails').value,
                     startImage: startImgBase64,
                     startImageName: startName,
@@ -256,6 +279,7 @@
                     endImageName: endName
                 };
 
+                // Direct Google Apps Script Web App URL (Works worldwide from anywhere)
                 const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
 
                 fetch(scriptURL, {
@@ -265,10 +289,15 @@
                 .then(response => response.json())
                 .then(result => {
                     document.getElementById('tripForm').reset();
+                    
+                    // Keep common saved details intact
+                    document.getElementById('driverName').value = driverName;
+                    document.getElementById('assignedBy').value = assignedBy;
+                    document.getElementById('carModel').value = carModel;
+
                     document.getElementById('submitBtn').style.display = 'block';
                     document.getElementById('loadingText').style.display = 'none';
                     
-                    // Show success banner on screen
                     const banner = document.getElementById('successBanner');
                     banner.style.display = 'block';
                     window.scrollTo({ top: 0, behavior: 'smooth' });
