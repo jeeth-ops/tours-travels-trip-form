@@ -119,12 +119,12 @@
     </div>
 
     <script>
-        // Yahan apna Google Apps Script ka Web App URL daal dena
-        const scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+        // Yahan tumhara Google Apps Script ka URL successfully lag chuka hai
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
 
         function checkLogin() {
             let pass = document.getElementById('adminPass').value;
-            // Yahan password set kar sakte ho, abhi ke liye "admin123" rakha hai
+            // Admin Password (aap ise badal bhi sakte hain)
             if (pass === "admin123") {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('dashboardContent').style.display = 'block';
@@ -196,7 +196,7 @@
         // Search Filter Logic
         function filterTable() {
             let query = document.getElementById('searchInput').value.toLowerCase();
-            let filtered = allTripsData.render ? allTripsData : allTripsData.filter(row => {
+            let filtered = allTripsData.filter(row => {
                 let driver = (row['Driver Name'] || '').toLowerCase();
                 let car = (row['Car Model'] || '').toLowerCase();
                 let start = (row['Start From'] || '').toLowerCase();
@@ -220,7 +220,7 @@
                     <td>₹${row['Night Charges'] || 0}</td>
                     <td>₹${row['Food/Acc. Expenses'] || 0}</td>
                     <td>₹${row['OT Charges (₹90)'] || 0}</td>
-                    <td>${row['Assigned By'] || ''}</td>
+                    <td>${row['AssignedBy'] || ''}</td>
                     <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank">View Photo</a>` : 'No Image'}</td>
                     <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank">View Photo</a>` : 'No Image'}</td>
                 `;
