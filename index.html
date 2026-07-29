@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tours & Travels - Driver Trip Log</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f0f2f5; padding: 15px; color: #333; }
+        
+        .container { 
+            max-width: 800px; 
+            background: #ffffff; 
+            margin: 20px auto; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); 
+        }
+
+        h2 { text-align: center; color: #1e293b; margin-bottom: 25px; font-size: 26px; font-weight: 700; }
+
+        /* Success Message Banner */
+        .success-banner {
+            display: none;
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px silver #6ee7b7;
+        }
+
+        /* Responsive Grid Layout for Tablet & Desktop */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .full-width {
+                grid-column: span 2;
+            }
+        }
+
+        .form-group { margin-bottom: 5px; }
+        
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: #475569; font-size: 14px; }
+        
+        input[type="text"], input[type="date"], input[type="number"], textarea, select {
+            width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; background: #ffffff; color: #1e293b; transition: all 0.3s;
+        }
+        
+        input:focus, textarea:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        input[readonly] { background-color: #f1f5f9; color: #334155; font-weight: bold; }
+        
+        .file-upload-box { 
+            border: 2px dashed #cbd5e1; 
+            padding: 15px; 
+            text-align: center; 
+            border-radius: 8px; 
+            background: #f8fafc; 
+        }
+        .file-upload-box input { margin-top: 5px; width: 100%; }
+
+        button {
+            width: 100%; 
+            background-color: #16a34a; 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background 0.3s; 
+            margin-top: 15px;
+        }
+        button:hover { background-color: #15803d; }
+        
+        .loading { 
+            display: none; 
+            text-align: center; 
+            color: #d97706; 
+            font-weight: bold; 
+            margin-top: 15px; 
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚗 Tours & Travels - Driver Trip Log</h2>
+    
+    <!-- Success Banner -->
+    <div id="successBanner" class="success-banner">
+        🎉 Trip Details Submitted Successfully & Saved to Google Sheet!
+    </div>
+
+    <form id="tripForm" onsubmit="submitForm(event)">
+        <div class="form-grid">
+            
+            <div class="form-group">
+                <label>Driver Name:</label>
+                <input type="text" id="driverName" required placeholder="Enter driver name">
+            </div>
+
+            <div class="form-group">
+                <label>Date:</label>
+                <input type="date" id="tripDate" required>
+            </div>
+
+            <div class="form-group">
+                <label>Car Model:</label>
+                <input type="text" id="carModel" required placeholder="e.g. Swift Dzire, Innova">
+            </div>
+
+            <div class="form-group">
+                <label>Trip Assigned By:</label>
+                <input type="text" id="assignedBy" required placeholder="Manager/Owner name">
+            </div>
+
+            <div class="form-group">
+                <label>Trip Start From (Destination):</label>
+                <input type="text" id="startDest" required placeholder="Starting location">
+            </div>
+
+            <div class="form-group">
+                <label>Trip End To (Destination):</label>
+                <input type="text" id="endDest" required placeholder="Ending location">
+            </div>
+
+            <div class="form-group">
+                <label>Starting Trip KM:</label>
+                <input type="number" id="startKm" required placeholder="e.g. 45000" oninput="calculateKm()">
+            </div>
+
+            <div class="form-group">
+                <label>End Trip KM:</label>
+                <input type="number" id="endKm" required placeholder="e.g. 45350" oninput="calculateKm()">
+            </div>
+
+            <div class="form-group">
+                <label>Total Trip KM (Auto Calculated):</label>
+                <input type="number" id="totalKm" readonly placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label>Night Charges (₹):</label>
+                <input type="number" id="nightCharges" value="0" placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label>Accommodation & Food Expenses (₹):</label>
+                <input type="number" id="expenses" value="0" placeholder="0">
+            </div>
+
+            <div class="form-group">
+                <label>No. of Overtime Hours:</label>
+                <input type="number" id="otHours" value="0" placeholder="0" oninput="calculateOt()">
+            </div>
+
+            <div class="form-group">
+                <label>Overtime Charges (₹90 per hr - Auto):</label>
+                <input type="number" id="otCharges" readonly value="0">
+            </div>
+
+            <div class="form-group">
+                <label>Time and Details:</label>
+                <input type="text" id="timeDetails" placeholder="e.g. Morning 8 AM departure">
+            </div>
+
+            <div class="form-group full-width">
+                <label>Toll Charges / Parking Details:</label>
+                <textarea id="tollParking" rows="2" placeholder="Mention toll or parking amounts/details"></textarea>
+            </div>
+
+            <!-- Direct Camera Capture for Start Image -->
+            <div class="form-group">
+                <label>📷 Image of Trip Start (Odometer/Car):</label>
+                <div class="file-upload-box">
+                    <input type="file" id="startImage" accept="image/*" capture="environment" required>
+                </div>
+            </div>
+
+            <!-- Direct Camera Capture for End Image -->
+            <div class="form-group">
+                <label>📷 Image of Trip End (Odometer/Car):</label>
+                <div class="file-upload-box">
+                    <input type="file" id="endImage" accept="image/*" capture="environment" required>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="full-width">
+            <button type="submit" id="submitBtn">Submit Trip Data</button>
+            <div class="loading" id="loadingText">Submitting data, please wait... ⏳</div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Auto calculate Total KM
+    function calculateKm() {
+        let start = parseFloat(document.getElementById('startKm').value) || 0;
+        let end = parseFloat(document.getElementById('endKm').value) || 0;
+        let total = end >= start ? end - start : 0;
+        document.getElementById('totalKm').value = total;
+    }
+
+    // Auto calculate Overtime Charges (₹90 per hour)
+    function calculateOt() {
+        let hours = parseFloat(document.getElementById('otHours').value) || 0;
+        document.getElementById('otCharges').value = hours * 90;
+    }
+
+    // Convert image to Base64 and send to Google Sheet Web App
+    function submitForm(event) {
+        event.preventDefault();
+        document.getElementById('submitBtn').style.display = 'none';
+        document.getElementById('loadingText').style.display = 'block';
+        document.getElementById('successBanner').style.display = 'none';
+
+        const fileInputStart = document.getElementById('startImage').files[0];
+        const fileInputEnd = document.getElementById('endImage').files[0];
+
+        toBase64(fileInputStart, function(startImgBase64, startName) {
+            toBase64(fileInputEnd, function(endImgBase64, endName) {
+                
+                const data = {
+                    driverName: document.getElementById('driverName').value,
+                    tripDate: document.getElementById('tripDate').value,
+                    carModel: document.getElementById('carModel').value,
+                    startDest: document.getElementById('startDest').value,
+                    endDest: document.getElementById('endDest').value,
+                    startKm: document.getElementById('startKm').value,
+                    endKm: document.getElementById('endKm').value,
+                    totalKm: document.getElementById('totalKm').value,
+                    nightCharges: document.getElementById('nightCharges').value,
+                    expenses: document.getElementById('expenses').value,
+                    otHours: document.getElementById('otHours').value,
+                    otCharges: document.getElementById('otCharges').value,
+                    tollParking: document.getElementById('tollParking').value,
+                    assignedBy: document.getElementById('assignedBy').value,
+                    timeDetails: document.getElementById('timeDetails').value,
+                    startImage: startImgBase64,
+                    startImageName: startName,
+                    endImage: endImgBase64,
+                    endImageName: endName
+                };
+
+                const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
+
+                fetch(scriptURL, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    document.getElementById('tripForm').reset();
+                    document.getElementById('submitBtn').style.display = 'block';
+                    document.getElementById('loadingText').style.display = 'none';
+                    
+                    // Show success banner on screen
+                    const banner = document.getElementById('successBanner');
+                    banner.style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                })
+                .catch(error => {
+                    console.error('Error!', error);
+                    alert('Submission failed. Please check your internet connection.');
+                    document.getElementById('submitBtn').style.display = 'block';
+                    document.getElementById('loadingText').style.display = 'none';
+                });
+
+            });
+        });
+    }
+
+    function toBase64(file, callback) {
+        if (!file) {
+            callback("", "");
+            return;
+        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function () {
+            callback(reader.result.split(',')[1], file.name);
+        };
+        reader.onerror = function (error) {
+            console.log('Error: ', error);
+        };
+    }
+</script>
+
+</body>
+</html>
