@@ -213,10 +213,12 @@
                     <input type="text" id="timeDetails" placeholder="Any extra notes or timings">
                 </div>
                 
-               <!-- Start Odometer Photo with Overlay Input (Direct Camera) -->
+               <!-- Start Odometer Section -->
 <div class="form-group">
     <label>Start Odometer Photo *</label>
-    <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+    
+    <!-- Action Buttons (Shown when no photo) -->
+    <div id="startActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
         <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
             <i class="fa-solid fa-camera"></i> Open Camera
         </button>
@@ -224,16 +226,26 @@
             <i class="fa-solid fa-image"></i> Choose Gallery
         </button>
     </div>
+
+    <!-- Preview & Delete Box (Hidden initially, appears after choosing photo) -->
+    <div id="startPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
+        <span id="startFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+        <button type="button" onclick="removeOdometerFile('start')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-trash"></i> Delete / Retake
+        </button>
+    </div>
+
     <input type="file" id="startCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('start', this)">
     <input type="file" id="startGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('start', this)">
     <input type="file" id="startImage" required style="display: none;">
-    <span id="startFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600;">No photo captured yet</span>
 </div>
 
-                <!-- End Odometer Photo with Overlay Input (Direct Camera) -->
+<!-- End Odometer Section -->
 <div class="form-group">
     <label>End Odometer Photo *</label>
-    <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+    
+    <!-- Action Buttons (Shown when no photo) -->
+    <div id="endActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
         <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
             <i class="fa-solid fa-camera"></i> Open Camera
         </button>
@@ -241,10 +253,18 @@
             <i class="fa-solid fa-image"></i> Choose Gallery
         </button>
     </div>
+
+    <!-- Preview & Delete Box (Hidden initially, appears after choosing photo) -->
+    <div id="endPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
+        <span id="endFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+        <button type="button" onclick="removeOdometerFile('end')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-trash"></i> Delete / Retake
+        </button>
+    </div>
+
     <input type="file" id="endCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('end', this)">
     <input type="file" id="endGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('end', this)">
     <input type="file" id="endImage" required style="display: none;">
-    <span id="endFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600;">No photo captured yet</span>
 </div>
 
 <script>
@@ -254,11 +274,29 @@ function setOdometerFile(type, input) {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(input.files[0]);
         targetInput.files = dataTransfer.files;
+
         document.getElementById(type + 'FileLabel').innerText = input.files[0].name;
+        document.getElementById(type + 'ActionBtns').style.display = 'none';
+        document.getElementById(type + 'PreviewBox').style.display = 'flex';
     }
 }
-</script>
 
+function removeOdometerFile(type) {
+    document.getElementById(type + 'Image').value = '';
+    document.getElementById(type + 'CamInput').value = '';
+    document.getElementById(type + 'GalInput').value = '';
+
+    document.getElementById(type + 'FileLabel').innerText = 'No photo captured yet';
+    document.getElementById(type + 'ActionBtns').style.display = 'flex';
+    document.getElementById(type + 'PreviewBox').style.display = 'none';
+}
+</script>
+                <!-- Submit Button Section -->
+<div class="form-group" style="margin-top: 20px;">
+    <button type="submit" id="submitBtn" style="width: 100%; background: #16a34a; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-paper-plane"></i> Submit Details
+    </button>
+</div>
     <!-- ADMIN LOGIN MODAL -->
     <div id="loginModal">
         <div class="login-box">
