@@ -275,15 +275,22 @@
     </div>
 
     <!-- ENTERPRISE ADMIN DASHBOARD SECTION -->
-    <div id="dashboardSection">
-        <header>
-            <h2><i class="fa-solid fa-chart-line"></i> Tours & Travels Enterprise Analytics</h2>
-            <div class="header-actions">
-                <button class="btn btn-export" onclick="exportToCSV()"><i class="fa-solid fa-file-excel"></i> Excel (CSV)</button>
-                <button class="btn btn-pdf" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Save PDF Report</button>
-                <button class="btn btn-back" onclick="logoutAdmin()"><i class="fa-solid fa-arrow-left"></i> Back to Form</button>
-            </div>
-        </header>
+<div id="dashboardSection">
+    <header>
+        <div class="header-brand-box">
+            <span style="font-size: 12px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">
+                <i class="fa-solid fa-building-shield"></i> Travels Company Name / Fleet Portal
+            </span>
+            <h2 style="font-size: 20px; color: #0f172a; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-chart-line" style="color: #2563eb;"></i> Tours & Travels Enterprise Analytics
+            </h2>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-export" onclick="exportToCSV()"><i class="fa-solid fa-file-excel"></i> Excel (CSV)</button>
+            <button class="btn btn-pdf" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Save PDF Report</button>
+            <button class="btn btn-back" onclick="logoutAdmin()"><i class="fa-solid fa-arrow-left"></i> Back to Form</button>
+        </div>
+    </header>
 
         <!-- Summary Metric Cards -->
         <div class="cards-grid">
