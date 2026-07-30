@@ -218,9 +218,9 @@
     <label>Start Odometer Photo *</label>
     <div style="position: relative; width: 100%;">
         <button type="button" style="width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; pointer-events: none;">
-            <i class="fa-solid fa-camera"></i> Open Camera
+            <i class="fa-solid fa-camera"></i> Choose Camera / Gallery
         </button>
-        <input type="file" id="startImage" accept="image/*" capture="environment" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="document.getElementById('startFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
+        <input type="file" id="startImage" accept="image/*" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="document.getElementById('startFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
     </div>
     <span id="startFileLabel" style="font-size: 12px; color: #16a34a; margin-top: 4px; display: block; font-weight: 600;">No photo captured yet</span>
 </div>
@@ -230,9 +230,9 @@
     <label>End Odometer Photo *</label>
     <div style="position: relative; width: 100%;">
         <button type="button" style="width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; pointer-events: none;">
-            <i class="fa-solid fa-camera"></i> Open Camera
+            <i class="fa-solid fa-camera"></i> Choose Camera / Gallery
         </button>
-        <input type="file" id="endImage" accept="image/*" capture="environment" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="document.getElementById('endFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
+        <input type="file" id="endImage" accept="image/*" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="document.getElementById('endFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
     </div>
     <span id="endFileLabel" style="font-size: 12px; color: #16a34a; margin-top: 4px; display: block; font-weight: 600;">No photo captured yet</span>
 </div>
