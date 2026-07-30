@@ -212,13 +212,29 @@
                     <label>Time & Additional Details</label>
                     <input type="text" id="timeDetails" placeholder="Any extra notes or timings">
                 </div>
+                
+                <!-- Start Odometer Photo with Open Camera Button -->
                 <div class="form-group">
                     <label>Start Odometer Photo *</label>
-                    <input type="file" id="startImage" accept="image/*" capture="environment" required>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button type="button" onclick="document.getElementById('startImage').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-solid fa-camera"></i> Open Camera
+                        </button>
+                    </div>
+                    <input type="file" id="startImage" accept="image/*" capture="environment" required style="display: none;" onchange="document.getElementById('startFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
+                    <span id="startFileLabel" style="font-size: 12px; color: #16a34a; margin-top: 4px; display: block; font-weight: 600;">No photo captured yet</span>
                 </div>
+
+                <!-- End Odometer Photo with Open Camera Button -->
                 <div class="form-group">
                     <label>End Odometer Photo *</label>
-                    <input type="file" id="endImage" accept="image/*" capture="environment" required>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button type="button" onclick="document.getElementById('endImage').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-solid fa-camera"></i> Open Camera
+                        </button>
+                    </div>
+                    <input type="file" id="endImage" accept="image/*" capture="environment" required style="display: none;" onchange="document.getElementById('endFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
+                    <span id="endFileLabel" style="font-size: 12px; color: #16a34a; margin-top: 4px; display: block; font-weight: 600;">No photo captured yet</span>
                 </div>
             </div>
             <button type="submit" class="submit-btn" id="submitBtn">Submit Trip Details 🚀</button>
@@ -435,6 +451,8 @@
                         document.getElementById('tripDate').valueAsDate = new Date();
                         document.getElementById('totalKm').value = "0";
                         document.getElementById('otCharges').value = "₹0";
+                        document.getElementById('startFileLabel').innerText = "No photo captured yet";
+                        document.getElementById('endFileLabel').innerText = "No photo captured yet";
                         btn.innerText = "Submit Trip Details 🚀";
                         btn.disabled = false;
                     })
