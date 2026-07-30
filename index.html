@@ -32,6 +32,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f1f5f9; padding: 20px; color: #1e293b; }
         
+        /* Fix for Mobile Icon Clicks */
+        button i, .btn i, .admin-trigger-btn i, .submit-btn i { pointer-events: none; }
+
         /* Modern Toast Notification Styles */
         #toastContainer {
             position: fixed; top: 20px; right: 20px; z-index: 9999;
@@ -65,10 +68,10 @@
         .submit-btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .submit-btn:hover { background: #1d4ed8; }
 
-        /* Modal for Admin Password (Safe & Responsive) */
+        /* Modal for Admin Password */
         #loginModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 99999;
+            background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
         .login-box { background: white; padding: 35px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.3); }
         .login-box i { font-size: 40px; color: #2563eb; margin-bottom: 15px; }
@@ -297,8 +300,19 @@ function removeOdometerFile(type) {
         <i class="fa-solid fa-paper-plane"></i> Submit Details
     </button>
 </div>
-</form>
-</div>
+   
+                <!-- ADMIN LOGIN MODAL -->
+    <div id="loginModal">
+        <div class="login-box">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h3>Admin Portal Login</h3>
+            <input type="password" id="adminPass" placeholder="Enter Password">
+            <button onclick="verifyLogin()">Login to Dashboard</button>
+            <br>
+            <button class="close-modal" onclick="closeLoginModal()">Cancel</button>
+            <p id="errorMsg" style="color: #ef4444; font-size: 13px; margin-top: 10px; display: none;">Incorrect Password!</p>
+        </div>
+    </div>
 
     <!-- ENTERPRISE ADMIN DASHBOARD SECTION -->
     <div id="dashboardSection">
@@ -408,19 +422,6 @@ function removeOdometerFile(type) {
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
-        </div>
-    </div>
-
-    <!-- ADMIN LOGIN MODAL (Placed Safely at the Very End of Body for Mobile/Chrome Compatibility) -->
-    <div id="loginModal">
-        <div class="login-box">
-            <i class="fa-solid fa-shield-halved"></i>
-            <h3>Admin Portal Login</h3>
-            <input type="password" id="adminPass" placeholder="Enter Password">
-            <button type="button" onclick="verifyLogin()">Login to Dashboard</button>
-            <br>
-            <button type="button" class="close-modal" onclick="closeLoginModal()">Cancel</button>
-            <p id="errorMsg" style="color: #ef4444; font-size: 13px; margin-top: 10px; display: none;">Incorrect Password!</p>
         </div>
     </div>
 
@@ -542,10 +543,7 @@ function removeOdometerFile(type) {
             document.getElementById('errorMsg').style.display = 'none';
         }
         function verifyLogin() {
-            let passInput = document.getElementById('adminPass');
-            let rawPass = passInput ? passInput.value : '';
-            let pass = rawPass.replace(/[\s\u200B-\u200D\uFEFF]/g, '').trim();
-
+            let pass = document.getElementById('adminPass').value;
             if (pass === "admin123") {
                 closeLoginModal();
                 document.getElementById('topNav').style.display = 'none';
@@ -554,7 +552,6 @@ function removeOdometerFile(type) {
                 fetchAdminData();
             } else {
                 document.getElementById('errorMsg').style.display = 'block';
-                showToast("Incorrect Password!", "error");
             }
         }
         function logoutAdmin() {
