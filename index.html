@@ -216,26 +216,48 @@
                <!-- Start Odometer Photo with Overlay Input (Direct Camera) -->
 <div class="form-group">
     <label>Start Odometer Photo *</label>
-    <div style="position: relative; width: 100%;">
-        <button type="button" style="width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; pointer-events: none;">
-            <i class="fa-solid fa-camera"></i> Choose Camera / Gallery
+    <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+        <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+            <i class="fa-solid fa-camera"></i> Open Camera
         </button>
-        <input type="file" id="startImage" accept="image/*" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="document.getElementById('startFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
+        <button type="button" onclick="document.getElementById('startGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+            <i class="fa-solid fa-image"></i> Choose Gallery
+        </button>
     </div>
-    <span id="startFileLabel" style="font-size: 12px; color: #16a34a; margin-top: 4px; display: block; font-weight: 600;">No photo captured yet</span>
+    <input type="file" id="startCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('start', this)">
+    <input type="file" id="startGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('start', this)">
+    <input type="file" id="startImage" required style="display: none;">
+    <span id="startFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600;">No photo captured yet</span>
 </div>
 
                 <!-- End Odometer Photo with Overlay Input (Direct Camera) -->
 <div class="form-group">
     <label>End Odometer Photo *</label>
-    <div style="position: relative; width: 100%;">
-        <button type="button" style="width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; pointer-events: none;">
-            <i class="fa-solid fa-camera"></i> Choose Camera / Gallery
+    <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+        <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+            <i class="fa-solid fa-camera"></i> Open Camera
         </button>
-        <input type="file" id="endImage" accept="image/*" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="document.getElementById('endFileLabel').innerText = this.files[0] ? this.files[0].name : 'No file chosen'">
+        <button type="button" onclick="document.getElementById('endGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+            <i class="fa-solid fa-image"></i> Choose Gallery
+        </button>
     </div>
-    <span id="endFileLabel" style="font-size: 12px; color: #16a34a; margin-top: 4px; display: block; font-weight: 600;">No photo captured yet</span>
+    <input type="file" id="endCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('end', this)">
+    <input type="file" id="endGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('end', this)">
+    <input type="file" id="endImage" required style="display: none;">
+    <span id="endFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600;">No photo captured yet</span>
 </div>
+
+<script>
+function setOdometerFile(type, input) {
+    if (input.files && input.files[0]) {
+        const targetInput = document.getElementById(type + 'Image');
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(input.files[0]);
+        targetInput.files = dataTransfer.files;
+        document.getElementById(type + 'FileLabel').innerText = input.files[0].name;
+    }
+}
+</script>
 
     <!-- ADMIN LOGIN MODAL -->
     <div id="loginModal">
