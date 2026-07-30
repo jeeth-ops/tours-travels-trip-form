@@ -65,10 +65,10 @@
         .submit-btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; margin-top: 10px; }
         .submit-btn:hover { background: #1d4ed8; }
 
-        /* Modal for Admin Password */
+        /* Modal for Admin Password (Safe & Responsive) */
         #loginModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
+            background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 99999;
         }
         .login-box { background: white; padding: 35px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.3); }
         .login-box i { font-size: 40px; color: #2563eb; margin-bottom: 15px; }
@@ -297,19 +297,8 @@ function removeOdometerFile(type) {
         <i class="fa-solid fa-paper-plane"></i> Submit Details
     </button>
 </div>
-   
-                <!-- ADMIN LOGIN MODAL -->
-    <div id="loginModal">
-        <div class="login-box">
-            <i class="fa-solid fa-shield-halved"></i>
-            <h3>Admin Portal Login</h3>
-            <input type="password" id="adminPass" placeholder="Enter Password">
-            <button onclick="verifyLogin()">Login to Dashboard</button>
-            <br>
-            <button class="close-modal" onclick="closeLoginModal()">Cancel</button>
-            <p id="errorMsg" style="color: #ef4444; font-size: 13px; margin-top: 10px; display: none;">Incorrect Password!</p>
-        </div>
-    </div>
+</form>
+</div>
 
     <!-- ENTERPRISE ADMIN DASHBOARD SECTION -->
     <div id="dashboardSection">
@@ -422,6 +411,19 @@ function removeOdometerFile(type) {
         </div>
     </div>
 
+    <!-- ADMIN LOGIN MODAL (Placed Safely at the Very End of Body for Mobile/Chrome Compatibility) -->
+    <div id="loginModal">
+        <div class="login-box">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h3>Admin Portal Login</h3>
+            <input type="password" id="adminPass" placeholder="Enter Password">
+            <button type="button" onclick="verifyLogin()">Login to Dashboard</button>
+            <br>
+            <button type="button" class="close-modal" onclick="closeLoginModal()">Cancel</button>
+            <p id="errorMsg" style="color: #ef4444; font-size: 13px; margin-top: 10px; display: none;">Incorrect Password!</p>
+        </div>
+    </div>
+
     <script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
 
@@ -510,22 +512,13 @@ function removeOdometerFile(type) {
                         document.getElementById('otCharges').value = "₹0";
                         document.getElementById('startFileLabel').innerText = "No photo captured yet";
                         document.getElementById('endFileLabel').innerText = "No photo captured yet";
-                        
-                        // Reset Start Odometer Preview UI
-                        document.getElementById('startActionBtns').style.display = 'flex';
-                        document.getElementById('startPreviewBox').style.display = 'none';
-                        
-                        // Reset End Odometer Preview UI
-                        document.getElementById('endActionBtns').style.display = 'flex';
-                        document.getElementById('endPreviewBox').style.display = 'none';
-
-                        btn.innerText = "Submit Details";
+                        btn.innerText = "Submit Trip Details 🚀";
                         btn.disabled = false;
                     })
                     .catch(err => {
                         console.error(err);
                         showToast("Error submitting form. Try again!", "error");
-                        btn.innerText = "Submit Details";
+                        btn.innerText = "Submit Trip Details 🚀";
                         btn.disabled = false;
                     });
                 });
@@ -548,12 +541,11 @@ function removeOdometerFile(type) {
             document.getElementById('adminPass').value = '';
             document.getElementById('errorMsg').style.display = 'none';
         }
-        
-        // Updated robust verifyLogin function (handles Chrome autofill perfectly)
         function verifyLogin() {
             let passInput = document.getElementById('adminPass');
-            let pass = passInput ? passInput.value.trim() : '';
-            
+            let rawPass = passInput ? passInput.value : '';
+            let pass = rawPass.replace(/[\s\u200B-\u200D\uFEFF]/g, '').trim();
+
             if (pass === "admin123") {
                 closeLoginModal();
                 document.getElementById('topNav').style.display = 'none';
@@ -562,9 +554,9 @@ function removeOdometerFile(type) {
                 fetchAdminData();
             } else {
                 document.getElementById('errorMsg').style.display = 'block';
+                showToast("Incorrect Password!", "error");
             }
         }
-
         function logoutAdmin() {
             document.getElementById('dashboardSection').style.display = 'none';
             document.getElementById('topNav').style.display = 'flex';
