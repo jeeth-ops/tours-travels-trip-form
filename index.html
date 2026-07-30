@@ -510,13 +510,22 @@ function removeOdometerFile(type) {
                         document.getElementById('otCharges').value = "₹0";
                         document.getElementById('startFileLabel').innerText = "No photo captured yet";
                         document.getElementById('endFileLabel').innerText = "No photo captured yet";
-                        btn.innerText = "Submit Trip Details 🚀";
+                        
+                        // Reset Start Odometer Preview UI
+                        document.getElementById('startActionBtns').style.display = 'flex';
+                        document.getElementById('startPreviewBox').style.display = 'none';
+                        
+                        // Reset End Odometer Preview UI
+                        document.getElementById('endActionBtns').style.display = 'flex';
+                        document.getElementById('endPreviewBox').style.display = 'none';
+
+                        btn.innerText = "Submit Details";
                         btn.disabled = false;
                     })
                     .catch(err => {
                         console.error(err);
                         showToast("Error submitting form. Try again!", "error");
-                        btn.innerText = "Submit Trip Details 🚀";
+                        btn.innerText = "Submit Details";
                         btn.disabled = false;
                     });
                 });
@@ -539,8 +548,12 @@ function removeOdometerFile(type) {
             document.getElementById('adminPass').value = '';
             document.getElementById('errorMsg').style.display = 'none';
         }
+        
+        // Updated robust verifyLogin function (handles Chrome autofill perfectly)
         function verifyLogin() {
-            let pass = document.getElementById('adminPass').value;
+            let passInput = document.getElementById('adminPass');
+            let pass = passInput ? passInput.value.trim() : '';
+            
             if (pass === "admin123") {
                 closeLoginModal();
                 document.getElementById('topNav').style.display = 'none';
@@ -551,6 +564,7 @@ function removeOdometerFile(type) {
                 document.getElementById('errorMsg').style.display = 'block';
             }
         }
+
         function logoutAdmin() {
             document.getElementById('dashboardSection').style.display = 'none';
             document.getElementById('topNav').style.display = 'flex';
