@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Tours Portal">
     <link rel="apple-touch-icon" href="192-192.png">
     
-   <!-- Service Worker Registration for Clean Pwa Install -->
+    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -32,10 +32,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f1f5f9; padding: 20px; color: #1e293b; }
         
-        /* Fix for Mobile Icon Clicks */
         button i, .btn i, .admin-trigger-btn i, .submit-btn i { pointer-events: none; }
 
-        /* Modern Toast Notification Styles */
         #toastContainer {
             position: fixed; top: 20px; right: 20px; z-index: 9999;
             display: flex; flex-direction: column; gap: 10px;
@@ -52,23 +50,18 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Top Navigation Bar */
         .top-nav { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .top-nav h1 { font-size: 20px; color: #0f172a; display: flex; align-items: center; gap: 10px; }
         .admin-trigger-btn { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .admin-trigger-btn:hover { background: #e2e8f0; color: #0f172a; }
 
-        /* Driver Form Styles (Mobile First Responsive) */
         .form-container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .form-container h2 { margin-bottom: 20px; color: #0f172a; font-size: 22px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px; }
         .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; background: #fff; }
         .form-group input:focus, .form-group select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .submit-btn { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .submit-btn:hover { background: #1d4ed8; }
 
-        /* Modal for Admin Password */
         #loginModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
@@ -80,7 +73,6 @@
         .login-box button { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
         .login-box .close-modal { margin-top: 10px; background: none; border: none; color: #64748b; cursor: pointer; font-size: 13px; }
 
-        /* Dashboard Section Styles */
         #dashboardSection { display: none; max-width: 1350px; margin: 0 auto; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
         header h2 { color: #0f172a; font-size: 22px; display: flex; align-items: center; gap: 10px; }
@@ -115,7 +107,6 @@
         .loading { text-align: center; padding: 50px; font-size: 18px; color: #64748b; }
         a.photo-link { background: #eff6ff; color: #2563eb; padding: 6px 12px; border-radius: 6px; font-weight: 600; text-decoration: none; border: 1px solid #bfdbfe; }
 
-        /* Professional Corporate PDF Print Layout */
         @media print {
             body { background: white; padding: 0; color: black; }
             .top-nav, #loginModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer { display: none !important; }
@@ -216,92 +207,61 @@
                     <input type="text" id="timeDetails" placeholder="Any extra notes or timings">
                 </div>
                 
-               <!-- Start Odometer Section -->
-<div class="form-group">
-    <label>Start Odometer Photo *</label>
-    
-    <!-- Action Buttons (Shown when no photo) -->
-    <div id="startActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
-        <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-            <i class="fa-solid fa-camera"></i> Open Camera
-        </button>
-        <button type="button" onclick="document.getElementById('startGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-            <i class="fa-solid fa-image"></i> Choose Gallery
-        </button>
+                <!-- Start Odometer Section -->
+                <div class="form-group">
+                    <label>Start Odometer Photo *</label>
+                    <div id="startActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
+                        <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-camera"></i> Open Camera
+                        </button>
+                        <button type="button" onclick="document.getElementById('startGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-image"></i> Choose Gallery
+                        </button>
+                    </div>
+                    <div id="startPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
+                        <span id="startFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('start')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-trash"></i> Delete / Retake
+                        </button>
+                    </div>
+                    <input type="file" id="startCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('start', this)">
+                    <input type="file" id="startGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('start', this)">
+                    <input type="file" id="startImage" required style="display: none;">
+                </div>
+
+                <!-- End Odometer Section -->
+                <div class="form-group">
+                    <label>End Odometer Photo *</label>
+                    <div id="endActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
+                        <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-camera"></i> Open Camera
+                        </button>
+                        <button type="button" onclick="document.getElementById('endGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-image"></i> Choose Gallery
+                        </button>
+                    </div>
+                    <div id="endPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
+                        <span id="endFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('end')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-trash"></i> Delete / Retake
+                        </button>
+                    </div>
+                    <input type="file" id="endCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('end', this)">
+                    <input type="file" id="endGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('end', this)">
+                    <input type="file" id="endImage" required style="display: none;">
+                </div>
+            </div>
+
+            <!-- Submit Button Section -->
+            <div class="form-group" style="margin-top: 20px;">
+                <button type="submit" id="submitBtn" style="width: 100%; background: #16a34a; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Details
+                </button>
+            </div>
+        </form>
     </div>
 
-    <!-- Preview & Delete Box (Hidden initially, appears after choosing photo) -->
-    <div id="startPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
-        <span id="startFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
-        <button type="button" onclick="removeOdometerFile('start')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-            <i class="fa-solid fa-trash"></i> Delete / Retake
-        </button>
-    </div>
-
-    <input type="file" id="startCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('start', this)">
-    <input type="file" id="startGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('start', this)">
-    <input type="file" id="startImage" required style="display: none;">
-</div>
-
-<!-- End Odometer Section -->
-<div class="form-group">
-    <label>End Odometer Photo *</label>
-    
-    <!-- Action Buttons (Shown when no photo) -->
-    <div id="endActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
-        <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-            <i class="fa-solid fa-camera"></i> Open Camera
-        </button>
-        <button type="button" onclick="document.getElementById('endGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-            <i class="fa-solid fa-image"></i> Choose Gallery
-        </button>
-    </div>
-
-    <!-- Preview & Delete Box (Hidden initially, appears after choosing photo) -->
-    <div id="endPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
-        <span id="endFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
-        <button type="button" onclick="removeOdometerFile('end')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-            <i class="fa-solid fa-trash"></i> Delete / Retake
-        </button>
-    </div>
-
-    <input type="file" id="endCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('end', this)">
-    <input type="file" id="endGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('end', this)">
-    <input type="file" id="endImage" required style="display: none;">
-</div>
-
-<script>
-function setOdometerFile(type, input) {
-    if (input.files && input.files[0]) {
-        const targetInput = document.getElementById(type + 'Image');
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(input.files[0]);
-        targetInput.files = dataTransfer.files;
-
-        document.getElementById(type + 'FileLabel').innerText = input.files[0].name;
-        document.getElementById(type + 'ActionBtns').style.display = 'none';
-        document.getElementById(type + 'PreviewBox').style.display = 'flex';
-    }
-}
-
-function removeOdometerFile(type) {
-    document.getElementById(type + 'Image').value = '';
-    document.getElementById(type + 'CamInput').value = '';
-    document.getElementById(type + 'GalInput').value = '';
-
-    document.getElementById(type + 'FileLabel').innerText = 'No photo captured yet';
-    document.getElementById(type + 'ActionBtns').style.display = 'flex';
-    document.getElementById(type + 'PreviewBox').style.display = 'none';
-}
-</script>
-                <!-- Submit Button Section -->
-<div class="form-group" style="margin-top: 20px;">
-    <button type="submit" id="submitBtn" style="width: 100%; background: #16a34a; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-        <i class="fa-solid fa-paper-plane"></i> Submit Details
-    </button>
-</div>
-   
-                <!-- ADMIN LOGIN MODAL -->
+    <!-- ADMIN LOGIN MODAL -->
     <div id="loginModal">
         <div class="login-box">
             <i class="fa-solid fa-shield-halved"></i>
@@ -424,14 +384,11 @@ function removeOdometerFile(type) {
             </table>
         </div>
     </div>
-
-    <script>
+<script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
 
-        // Auto set today's date
         document.getElementById('tripDate').valueAsDate = new Date();
 
-        // Modern Toast Notification Function
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -457,7 +414,29 @@ function removeOdometerFile(type) {
             document.getElementById('otCharges').value = "₹" + charges;
         }
 
-        // Form Submission Script with Smart Validation
+        function setOdometerFile(type, input) {
+            if (input.files && input.files[0]) {
+                const targetInput = document.getElementById(type + 'Image');
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(input.files[0]);
+                targetInput.files = dataTransfer.files;
+
+                document.getElementById(type + 'FileLabel').innerText = input.files[0].name;
+                document.getElementById(type + 'ActionBtns').style.display = 'none';
+                document.getElementById(type + 'PreviewBox').style.display = 'flex';
+            }
+        }
+
+        function removeOdometerFile(type) {
+            document.getElementById(type + 'Image').value = '';
+            document.getElementById(type + 'CamInput').value = '';
+            document.getElementById(type + 'GalInput').value = '';
+
+            document.getElementById(type + 'FileLabel').innerText = 'No photo captured yet';
+            document.getElementById(type + 'ActionBtns').style.display = 'flex';
+            document.getElementById(type + 'PreviewBox').style.display = 'none';
+        }
+
         function submitForm(e) {
             e.preventDefault();
             
@@ -511,15 +490,15 @@ function removeOdometerFile(type) {
                         document.getElementById('tripDate').valueAsDate = new Date();
                         document.getElementById('totalKm').value = "0";
                         document.getElementById('otCharges').value = "₹0";
-                        document.getElementById('startFileLabel').innerText = "No photo captured yet";
-                        document.getElementById('endFileLabel').innerText = "No photo captured yet";
-                        btn.innerText = "Submit Trip Details 🚀";
+                        removeOdometerFile('start');
+                        removeOdometerFile('end');
+                        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
                         btn.disabled = false;
                     })
                     .catch(err => {
                         console.error(err);
                         showToast("Error submitting form. Try again!", "error");
-                        btn.innerText = "Submit Trip Details 🚀";
+                        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
                         btn.disabled = false;
                     });
                 });
@@ -533,7 +512,6 @@ function removeOdometerFile(type) {
             reader.onerror = error => console.log("Error: ", error);
         }
 
-        // Admin Modal Functions
         function openLoginModal() {
             document.getElementById('loginModal').style.display = 'flex';
         }
@@ -686,7 +664,6 @@ function removeOdometerFile(type) {
             document.getElementById('tripTable').style.display = 'table';
         }
 
-        // PROFESSIONAL ENTERPRISE-GRADE CHART VISUALIZATION
         function renderCharts(data) {
             let chartType = document.getElementById('chartTypeSelect').value;
             let ctx = document.getElementById('dynamicChart').getContext('2d');
@@ -703,9 +680,7 @@ function removeOdometerFile(type) {
                 data.forEach(row => {
                     let driver = (row['Driver Name'] || 'Unknown').trim();
                     let km = parseFloat(row['Total KM'] || 0);
-                    if (driver) {
-                        driverKm[driver] = (driverKm[driver] || 0) + km;
-                    }
+                    if (driver) { driverKm[driver] = (driverKm[driver] || 0) + km; }
                 });
 
                 let labels = Object.keys(driverKm);
@@ -716,12 +691,7 @@ function removeOdometerFile(type) {
                     type: 'pie',
                     data: {
                         labels: labels,
-                        datasets: [{
-                            data: values,
-                            backgroundColor: corporatePalette,
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
+                        datasets: [{ data: values, backgroundColor: corporatePalette, borderWidth: 2, borderColor: '#ffffff' }]
                     },
                     options: {
                         responsive: true,
@@ -729,24 +699,14 @@ function removeOdometerFile(type) {
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: {
-                                    boxWidth: 14,
-                                    padding: 15,
-                                    font: { family: "'Segoe UI', sans-serif", size: 12, weight: '600' },
-                                    color: '#1e293b'
-                                }
+                                labels: { boxWidth: 14, padding: 15, font: { size: 12, weight: '600' }, color: '#1e293b' }
                             },
                             tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                titleFont: { family: "'Segoe UI', sans-serif", size: 13, weight: 'bold' },
-                                bodyFont: { family: "'Segoe UI', sans-serif", size: 12 },
-                                padding: 12,
-                                cornerRadius: 8,
                                 callbacks: {
                                     label: function(context) {
                                         let val = context.raw || 0;
                                         let pct = totalFleetKm > 0 ? ((val / totalFleetKm) * 100).toFixed(1) : 0;
-                                        return ` ${context.label}: ${val.toLocaleString()} KM (${pct}% of total)`;
+                                        return ` ${context.label}: ${val.toLocaleString()} KM (${pct}%)`;
                                     }
                                 }
                             }
@@ -760,9 +720,7 @@ function removeOdometerFile(type) {
                 data.forEach(row => {
                     let car = (row['Car Model'] || 'Unknown').trim();
                     let km = parseFloat(row['Total KM'] || 0);
-                    if (car) {
-                        carKm[car] = (carKm[car] || 0) + km;
-                    }
+                    if (car) { carKm[car] = (carKm[car] || 0) + km; }
                 });
 
                 let labels = Object.keys(carKm);
@@ -773,12 +731,7 @@ function removeOdometerFile(type) {
                     type: 'doughnut',
                     data: {
                         labels: labels,
-                        datasets: [{
-                            data: values,
-                            backgroundColor: corporatePalette,
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
+                        datasets: [{ data: values, backgroundColor: corporatePalette, borderWidth: 2, borderColor: '#ffffff' }]
                     },
                     options: {
                         responsive: true,
@@ -786,19 +739,9 @@ function removeOdometerFile(type) {
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: {
-                                    boxWidth: 14,
-                                    padding: 15,
-                                    font: { family: "'Segoe UI', sans-serif", size: 12, weight: '600' },
-                                    color: '#1e293b'
-                                }
+                                labels: { boxWidth: 14, padding: 15, font: { size: 12, weight: '600' }, color: '#1e293b' }
                             },
                             tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                titleFont: { family: "'Segoe UI', sans-serif", size: 13, weight: 'bold' },
-                                bodyFont: { family: "'Segoe UI', sans-serif", size: 12 },
-                                padding: 12,
-                                cornerRadius: 8,
                                 callbacks: {
                                     label: function(context) {
                                         let val = context.raw || 0;
@@ -817,58 +760,22 @@ function removeOdometerFile(type) {
                 data.forEach(row => {
                     let car = (row['Car Model'] || 'Unknown').trim();
                     let km = parseFloat(row['Total KM'] || 0);
-                    if (car) {
-                        carKm[car] = (carKm[car] || 0) + km;
-                    }
+                    if (car) { carKm[car] = (carKm[car] || 0) + km; }
                 });
-
-                let labels = Object.keys(carKm);
-                let values = Object.values(carKm);
 
                 dynamicChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Total KM',
-                            data: values,
-                            backgroundColor: '#2563eb',
-                            borderRadius: 8,
-                            barThickness: 'flex',
-                            maxBarThickness: 50
-                        }]
+                        labels: Object.keys(carKm),
+                        datasets: [{ label: 'Total KM', data: Object.values(carKm), backgroundColor: '#2563eb', borderRadius: 8 }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                titleFont: { family: "'Segoe UI', sans-serif", size: 13, weight: 'bold' },
-                                bodyFont: { family: "'Segoe UI', sans-serif", size: 12 },
-                                padding: 12,
-                                cornerRadius: 8,
-                                callbacks: {
-                                    label: function(context) {
-                                        return ` Total KM: ${context.raw.toLocaleString()} KM`;
-                                    }
-                                }
-                            }
-                        },
+                        plugins: { legend: { display: false } },
                         scales: {
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { family: "'Segoe UI', sans-serif", size: 12, weight: '600' }, color: '#334155' }
-                            },
-                            y: {
-                                grid: { color: '#e2e8f0', drawBorder: false },
-                                ticks: { 
-                                    font: { family: "'Segoe UI', sans-serif", size: 11 }, 
-                                    color: '#64748b',
-                                    callback: function(value) { return value.toLocaleString() + ' KM'; }
-                                }
-                            }
+                            x: { grid: { display: false } },
+                            y: { ticks: { callback: function(value) { return value.toLocaleString() + ' KM'; } } }
                         }
                     }
                 });
@@ -879,9 +786,7 @@ function removeOdometerFile(type) {
                 data.forEach(row => {
                     let d = (row['Date'] || '').trim();
                     let km = parseFloat(row['Total KM'] || 0);
-                    if (d) {
-                        dateKm[d] = (dateKm[d] || 0) + km;
-                    }
+                    if (d) { dateKm[d] = (dateKm[d] || 0) + km; }
                 });
 
                 let sortedDates = Object.keys(dateKm).sort();
@@ -891,52 +796,15 @@ function removeOdometerFile(type) {
                     type: 'line',
                     data: {
                         labels: sortedDates,
-                        datasets: [{
-                            label: 'KM Driven',
-                            data: sortedKmValues,
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointBackgroundColor: '#2563eb',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
-                        }]
+                        datasets: [{ label: 'KM Driven', data: sortedKmValues, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, fill: true, tension: 0.4 }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                titleFont: { family: "'Segoe UI', sans-serif", size: 13, weight: 'bold' },
-                                bodyFont: { family: "'Segoe UI', sans-serif", size: 12 },
-                                padding: 12,
-                                cornerRadius: 8,
-                                callbacks: {
-                                    label: function(context) {
-                                        return ` KM Driven: ${context.raw.toLocaleString()} KM`;
-                                    }
-                                }
-                            }
-                        },
+                        plugins: { legend: { display: false } },
                         scales: {
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { family: "'Segoe UI', sans-serif", size: 11 }, color: '#64748b' }
-                            },
-                            y: {
-                                grid: { color: '#e2e8f0', drawBorder: false },
-                                ticks: { 
-                                    font: { family: "'Segoe UI', sans-serif", size: 11 }, 
-                                    color: '#64748b',
-                                    callback: function(value) { return value.toLocaleString() + ' KM'; }
-                                }
-                            }
+                            x: { grid: { display: false } },
+                            y: { ticks: { callback: function(value) { return value.toLocaleString() + ' KM'; } } }
                         }
                     }
                 });
@@ -956,14 +824,7 @@ function removeOdometerFile(type) {
                     type: 'bar',
                     data: {
                         labels: ['Night Charges', 'Food / Acc. Expenses', 'Overtime (OT) Charges'],
-                        datasets: [{
-                            label: 'Amount (₹)',
-                            data: [totalNight, totalFood, totalOt],
-                            backgroundColor: ['#d97706', '#06b6d4', '#8b5cf6'],
-                            borderRadius: 8,
-                            barThickness: 'flex',
-                            maxBarThickness: 70
-                        }]
+                        datasets: [{ label: 'Amount (₹)', data: [totalNight, totalFood, totalOt], backgroundColor: ['#d97706', '#06b6d4', '#8b5cf6'], borderRadius: 8 }]
                     },
                     options: {
                         responsive: true,
@@ -971,11 +832,6 @@ function removeOdometerFile(type) {
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                titleFont: { family: "'Segoe UI', sans-serif", size: 13, weight: 'bold' },
-                                bodyFont: { family: "'Segoe UI', sans-serif", size: 12 },
-                                padding: 12,
-                                cornerRadius: 8,
                                 callbacks: {
                                     label: function(context) {
                                         let val = context.raw || 0;
@@ -986,18 +842,8 @@ function removeOdometerFile(type) {
                             }
                         },
                         scales: {
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { family: "'Segoe UI', sans-serif", size: 12, weight: '600' }, color: '#334155' }
-                            },
-                            y: {
-                                grid: { color: '#e2e8f0', drawBorder: false },
-                                ticks: { 
-                                    font: { family: "'Segoe UI', sans-serif", size: 11 }, 
-                                    color: '#64748b',
-                                    callback: function(value) { return '₹' + value.toLocaleString(); }
-                                }
-                            }
+                            x: { grid: { display: false } },
+                            y: { ticks: { callback: function(value) { return '₹' + value.toLocaleString(); } } }
                         }
                     }
                 });
