@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tours-portal-v4'; // Jab bhi bada update karein, isko v5, v6 kar dena
+const CACHE_NAME = 'tours-portal-v6'; // Jab bhi bada update karein, isko v7, v8 kar dena
 const ASSETS = [
   './',
   'index.html'
