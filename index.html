@@ -160,7 +160,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label>Driver Name *</label>
-                    <input type="text" id="driverName" required placeholder="Enter your full name">
+                    <input type="text" id="driverName" required placeholder="Enter your full name" oninput="liveTitleCase(this)" onblur="applyTitleCase('driverName')">
                 </div>
                 <div class="form-group">
                     <label>Trip Date *</label>
@@ -172,15 +172,15 @@
                 </div>
                 <div class="form-group">
                     <label>Assigned By *</label>
-                    <input type="text" id="assignedBy" required placeholder="Manager / Company Name">
+                    <input type="text" id="assignedBy" required placeholder="Manager / Company Name" oninput="liveTitleCase(this)" onblur="applyTitleCase('assignedBy')">
                 </div>
                 <div class="form-group">
                     <label>Start From (Location) *</label>
-                    <input type="text" id="startDest" required placeholder="Pickup Location">
+                    <input type="text" id="startDest" required placeholder="Pickup Location" oninput="liveTitleCase(this)" onblur="applyTitleCase('startDest')">
                 </div>
                 <div class="form-group">
                     <label>End To (Location) *</label>
-                    <input type="text" id="endDest" required placeholder="Drop Location">
+                    <input type="text" id="endDest" required placeholder="Drop Location" oninput="liveTitleCase(this)" onblur="applyTitleCase('endDest')">
                 </div>
                 <div class="form-group">
                     <label>Start KM (Odometer) *</label>
@@ -439,13 +439,18 @@
 <script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
 
-        // ▼▼▼ CAR LIST — future me nayi gaadi add karni ho toh bas yahan ek naya line jod dena ▼▼▼
+        // ▼▼▼ CAR LIST — future me nayi gaadi add karni ho toh bas yahan ek naya line jod dena (SABHI CAPS mein likhna) ▼▼▼
         const carList = [
-            "Ertiga White - MH05 FJ 9209",
-            "Ertiga White - MH05 FJ 6964",
-            "Ertiga White - MH05 FJ 7234"
+            "ERTIGA WHITE - MH05 FJ 9209",
+            "ERTIGA WHITE - MH05 FJ 6964",
+            "ERTIGA WHITE - MH05 FJ 7234"
         ];
         // ▲▲▲ CAR LIST END ▲▲▲
+
+        // Car name ko hamesha ek jaisa (UPPERCASE, trimmed) banata hai, taaki "Bolero" aur "BOLERO" alag-alag na dikhein
+        function normCar(v) {
+            return (v || '').toString().trim().toUpperCase();
+        }
 
         function populateCarDropdown() {
             let select = document.getElementById('carModel');
@@ -471,6 +476,27 @@
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
+        }
+
+        // Naam/Location fields ko "First Letter Capital, baaki small" format mein rakhta hai
+        function toTitleCase(str) {
+            return (str || '').toLowerCase().replace(/(^|[\s\-\/])([a-z])/g, (m, sep, chr) => sep + chr.toUpperCase());
+        }
+
+        // Typing ke dauraan hi live capitalize karta hai (cursor position kharaab kiye bina)
+        function liveTitleCase(el) {
+            let cursorPos = el.selectionStart;
+            let oldLen = el.value.length;
+            el.value = toTitleCase(el.value);
+            let newLen = el.value.length;
+            let pos = cursorPos + (newLen - oldLen);
+            el.setSelectionRange(pos, pos);
+        }
+
+        // Field se bahar jaate waqt (blur) extra spaces trim karke final format set karta hai
+        function applyTitleCase(id) {
+            let el = document.getElementById(id);
+            el.value = toTitleCase(el.value.trim());
         }
 
         function calculateKM() {
@@ -505,7 +531,13 @@
 
         function submitForm(e) {
             e.preventDefault();
-            
+
+            // Safety net: agar blur trigger nahi hua (e.g. autofill), tab bhi format sahi ho
+            applyTitleCase('driverName');
+            applyTitleCase('assignedBy');
+            applyTitleCase('startDest');
+            applyTitleCase('endDest');
+
             let startKm = parseFloat(document.getElementById('startKm').value) || 0;
             let endKm = parseFloat(document.getElementById('endKm').value) || 0;
 
@@ -640,7 +672,7 @@
         function populateCarFilterDropdown(data) {
             let carSet = new Set();
             data.forEach(row => {
-                let c = (row['Car Model'] || '').trim();
+                let c = normCar(row['Car Model']);
                 if (c) carSet.add(c);
             });
             let select = document.getElementById('carFilter');
@@ -746,7 +778,7 @@
                 }
 
                 let matchesDriver = selectedDriver === 'ALL' || (row['Driver Name'] || '').trim() === selectedDriver;
-                let matchesCar = selectedCar === 'ALL' || (row['Car Model'] || '').trim() === selectedCar;
+                let matchesCar = selectedCar === 'ALL' || normCar(row['Car Model']) === selectedCar;
 
                 let driver = (row['Driver Name'] || '').toLowerCase();
                 let car = (row['Car Model'] || '').toLowerCase();
@@ -826,7 +858,7 @@
                     <td>${row['Timestamp'] ? new Date(row['Timestamp']).toLocaleString() : ''}</td>
                     <td><b>${row['Driver Name'] || ''}</b></td>
                     <td>${row['Date'] || ''}</td>
-                    <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 600;">${row['Car Model'] || ''}</span></td>
+                    <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 600;">${normCar(row['Car Model'])}</span></td>
                     <td>${row['Start From'] || ''}</td>
                     <td>${row['End To'] || ''}</td>
                     <td><b style="color: #2563eb;">${km.toLocaleString()} KM</b></td>
@@ -899,7 +931,7 @@
                 document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-pie" style="color: #10b981;"></i> Car Model KM Share (Enterprise Analytics)';
                 let carKm = {};
                 data.forEach(row => {
-                    let car = (row['Car Model'] || 'Unknown').trim();
+                    let car = normCar(row['Car Model']) || 'UNKNOWN';
                     let km = parseFloat(row['Total KM'] || 0);
                     if (car) { carKm[car] = (carKm[car] || 0) + km; }
                 });
@@ -939,7 +971,7 @@
                 document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-column" style="color: #f59e0b;"></i> Total KM Driven by Car Model (Enterprise Analytics)';
                 let carKm = {};
                 data.forEach(row => {
-                    let car = (row['Car Model'] || 'Unknown').trim();
+                    let car = normCar(row['Car Model']) || 'UNKNOWN';
                     let km = parseFloat(row['Total KM'] || 0);
                     if (car) { carKm[car] = (carKm[car] || 0) + km; }
                 });
@@ -1042,7 +1074,7 @@
         function renderCarSummary(data) {
             let summary = {};
             data.forEach(row => {
-                let car = (row['Car Model'] || '').trim() || 'Unknown';
+                let car = normCar(row['Car Model']) || 'UNKNOWN';
                 if (!summary[car]) summary[car] = { trips: 0, km: 0, drivers: new Set(), lastDate: null, lastDriver: '-' };
                 summary[car].trips++;
                 summary[car].km += parseFloat(row['Total KM'] || 0);
