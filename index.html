@@ -99,6 +99,18 @@
         .search-input, .select-input { flex: 1; min-width: 240px; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: white; }
         .record-count { font-size: 14px; color: #64748b; font-weight: 600; margin-left: auto; }
 
+        .tabs-nav { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 14px; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .tab-btn:hover { background: #f1f5f9; color: #0f172a; }
+        .tab-btn.active { background: #2563eb; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        table th.sortable { cursor: pointer; user-select: none; }
+        table th.sortable:hover { background: #1e293b; }
+        .sort-icon { font-size: 11px; margin-left: 5px; opacity: 0.5; }
+        .sort-icon.active { opacity: 1; color: #60a5fa; }
+
         .table-container { background: white; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 40px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
         th { background: #0f172a; color: white; padding: 15px 14px; font-weight: 600; white-space: nowrap; }
@@ -109,7 +121,7 @@
 
         @media print {
             body { background: white; padding: 0; color: black; }
-            .top-nav, #loginModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer { display: none !important; }
+            .top-nav, #loginModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav { display: none !important; }
             #dashboardSection { display: block !important; max-width: 100% !important; margin: 0; padding: 0; }
             header { box-shadow: none; border-bottom: 3px solid #0f172a; padding: 15px 0; margin-bottom: 20px; }
             header h2::before { content: "CORPORATE EXPENSE & TRIP INVOICE STATEMENT\A"; font-size: 12px; color: #64748b; display: block; font-weight: normal; }
@@ -285,53 +297,143 @@
             </div>
         </div>
 
-        <!-- Dynamic Professional Chart Section with Select Chart Option -->
-        <div class="analytics-grid">
-            <div class="chart-card">
-                <div class="chart-header-controls">
-                    <h3 id="chartTitle"><i class="fa-solid fa-chart-pie" style="color: #2563eb;"></i> Fleet Analytics Visualizer</h3>
-                    <select id="chartTypeSelect" class="select-input" style="max-width: 280px;" onchange="applyFilters()">
-                        <option value="pie" selected>🥧 Pie Chart (Driver KM Distribution)</option>
-                        <option value="doughnut">🍩 Doughnut Chart (Car Model Share)</option>
-                        <option value="bar">📊 Bar Chart (KM by Car Model)</option>
-                        <option value="line">📈 Line Chart (KM Trend Over Dates)</option>
-                    </select>
+        <!-- Tab Navigation -->
+        <div class="tabs-nav" id="tabsNav">
+            <button class="tab-btn active" data-tab="tripLogTab" onclick="switchTab('tripLogTab')"><i class="fa-solid fa-list"></i> Trip Records</button>
+            <button class="tab-btn" data-tab="driverTab" onclick="switchTab('driverTab')"><i class="fa-solid fa-id-card"></i> Driver Summary</button>
+            <button class="tab-btn" data-tab="carTab" onclick="switchTab('carTab')"><i class="fa-solid fa-car"></i> Car Usage</button>
+            <button class="tab-btn" data-tab="trendsTab" onclick="switchTab('trendsTab')"><i class="fa-solid fa-chart-line"></i> Trends</button>
+        </div>
+
+        <!-- TAB: TRIP RECORDS -->
+        <div class="tab-content active" id="tripLogTab">
+            <!-- Dynamic Professional Chart Section with Select Chart Option -->
+            <div class="analytics-grid">
+                <div class="chart-card">
+                    <div class="chart-header-controls">
+                        <h3 id="chartTitle"><i class="fa-solid fa-chart-pie" style="color: #2563eb;"></i> Fleet Analytics Visualizer</h3>
+                        <select id="chartTypeSelect" class="select-input" style="max-width: 280px;" onchange="applyFilters()">
+                            <option value="pie" selected>🥧 Pie Chart (Driver KM Distribution)</option>
+                            <option value="doughnut">🍩 Doughnut Chart (Car Model Share)</option>
+                            <option value="bar">📊 Bar Chart (KM by Car Model)</option>
+                            <option value="line">📈 Line Chart (KM Trend Over Dates)</option>
+                        </select>
+                    </div>
+                    <div style="position: relative; height: 360px; width: 100%;">
+                        <canvas id="dynamicChart"></canvas>
+                    </div>
                 </div>
-                <div style="position: relative; height: 360px; width: 100%;">
-                    <canvas id="dynamicChart"></canvas>
-                </div>
+            </div>
+
+            <!-- Filters Row 1 -->
+            <div class="filter-box">
+                <select id="monthFilter" class="select-input" onchange="applyFilters()">
+                    <option value="ALL">📅 All Months (Lifetime Report)</option>
+                </select>
+                <select id="driverFilter" class="select-input" onchange="applyFilters()">
+                    <option value="ALL">👤 All Drivers</option>
+                </select>
+                <select id="carFilter" class="select-input" onchange="applyFilters()">
+                    <option value="ALL">🚗 All Cars</option>
+                </select>
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Driver, Car Model, Location..." onkeyup="applyFilters()">
+            </div>
+
+            <!-- Filters Row 2: Custom Date Range -->
+            <div class="filter-box">
+                <label style="font-weight: 600; font-size: 13px; color: #475569; white-space: nowrap;">📆 Custom Date Range:</label>
+                <input type="date" id="dateFrom" class="select-input" style="max-width: 180px;" onchange="applyFilters()">
+                <span style="color: #94a3b8; font-weight: 600;">to</span>
+                <input type="date" id="dateTo" class="select-input" style="max-width: 180px;" onchange="applyFilters()">
+                <button class="btn btn-back" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filters</button>
+                <span class="record-count" id="recordCount">Showing 0 entries</span>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-container">
+                <div id="loadingText" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Fetching live enterprise data...</div>
+                <table id="tripTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th class="sortable" onclick="sortTable('Timestamp')">Timestamp <i class="fa-solid fa-sort sort-icon" id="sortIcon-Timestamp"></i></th>
+                            <th class="sortable" onclick="sortTable('Driver Name')">Driver Name <i class="fa-solid fa-sort sort-icon" id="sortIcon-Driver Name"></i></th>
+                            <th class="sortable" onclick="sortTable('Date')">Date <i class="fa-solid fa-sort sort-icon" id="sortIcon-Date"></i></th>
+                            <th class="sortable" onclick="sortTable('Car Model')">Car Model <i class="fa-solid fa-sort sort-icon" id="sortIcon-Car Model"></i></th>
+                            <th class="sortable" onclick="sortTable('Start From')">Start From <i class="fa-solid fa-sort sort-icon" id="sortIcon-Start From"></i></th>
+                            <th class="sortable" onclick="sortTable('End To')">End To <i class="fa-solid fa-sort sort-icon" id="sortIcon-End To"></i></th>
+                            <th class="sortable" onclick="sortTable('Total KM')">Total KM <i class="fa-solid fa-sort sort-icon" id="sortIcon-Total KM"></i></th>
+                            <th class="sortable" onclick="sortTable('Assigned By')">Assigned By <i class="fa-solid fa-sort sort-icon" id="sortIcon-Assigned By"></i></th>
+                            <th>Start Odometer</th>
+                            <th>End Odometer</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Filters -->
-        <div class="filter-box">
-            <select id="monthFilter" class="select-input" onchange="applyFilters()">
-                <option value="ALL">📅 All Months (Lifetime Report)</option>
-            </select>
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Driver, Car Model, Location..." onkeyup="applyFilters()">
-            <span class="record-count" id="recordCount">Showing 0 entries</span>
+        <!-- TAB: DRIVER SUMMARY -->
+        <div class="tab-content" id="driverTab">
+            <div class="filter-box">
+                <span class="record-count" id="driverRecordCount">Showing 0 drivers</span>
+                <button class="btn btn-export" onclick="exportSummaryCSV('driver')"><i class="fa-solid fa-file-excel"></i> Export Driver CSV</button>
+            </div>
+            <div class="table-container">
+                <table id="driverTable">
+                    <thead>
+                        <tr>
+                            <th>Driver Name</th>
+                            <th>Total Trips</th>
+                            <th>Total KM</th>
+                            <th>Avg KM / Trip</th>
+                            <th>Cars Driven</th>
+                            <th>First Trip</th>
+                            <th>Last Trip</th>
+                        </tr>
+                    </thead>
+                    <tbody id="driverTableBody"></tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Table Container -->
-        <div class="table-container">
-            <div id="loadingText" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Fetching live enterprise data...</div>
-            <table id="tripTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Timestamp</th>
-                        <th>Driver Name</th>
-                        <th>Date</th>
-                        <th>Car Model</th>
-                        <th>Start From</th>
-                        <th>End To</th>
-                        <th>Total KM</th>
-                        <th>Assigned By</th>
-                        <th>Start Odometer</th>
-                        <th>End Odometer</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+        <!-- TAB: CAR USAGE -->
+        <div class="tab-content" id="carTab">
+            <div class="filter-box">
+                <span class="record-count" id="carRecordCount">Showing 0 cars</span>
+                <button class="btn btn-export" onclick="exportSummaryCSV('car')"><i class="fa-solid fa-file-excel"></i> Export Car CSV</button>
+            </div>
+            <div class="table-container">
+                <table id="carTable">
+                    <thead>
+                        <tr>
+                            <th>Car Model</th>
+                            <th>Total Trips</th>
+                            <th>Total KM Driven</th>
+                            <th>Avg KM / Trip</th>
+                            <th>Drivers Used By</th>
+                            <th>Last Used</th>
+                            <th>Last Driven By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: TRENDS -->
+        <div class="tab-content" id="trendsTab">
+            <div class="chart-card">
+                <div class="chart-header-controls">
+                    <h3><i class="fa-solid fa-chart-line" style="color: #2563eb;"></i> KM & Trip Volume Trend</h3>
+                    <select id="trendGroupSelect" class="select-input" style="max-width: 220px;" onchange="renderTrends(filteredDataCache)">
+                        <option value="week" selected>📅 Weekly</option>
+                        <option value="month">📅 Monthly</option>
+                    </select>
+                </div>
+                <div style="position: relative; height: 380px; width: 100%;">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 <script>
@@ -498,6 +600,8 @@
         let allTripsData = [];
         let filteredDataCache = [];
         let dynamicChartInstance = null;
+        let trendsChartInstance = null;
+        let currentSort = { key: null, dir: 1 };
 
         function fetchAdminData() {
             fetch(scriptURL)
@@ -505,12 +609,72 @@
             .then(data => {
                 allTripsData = data;
                 populateMonthDropdown(data);
+                populateDriverFilterDropdown(data);
+                populateCarFilterDropdown(data);
                 applyFilters();
             })
             .catch(err => {
                 console.error(err);
                 document.getElementById('loadingText').innerHTML = '<span style="color: #ef4444;">Failed to load data.</span>';
             });
+        }
+
+        function populateDriverFilterDropdown(data) {
+            let driverSet = new Set();
+            data.forEach(row => {
+                let d = (row['Driver Name'] || '').trim();
+                if (d) driverSet.add(d);
+            });
+            let select = document.getElementById('driverFilter');
+            let currentVal = select.value;
+            select.innerHTML = '<option value="ALL">👤 All Drivers</option>';
+            Array.from(driverSet).sort().forEach(d => {
+                let opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = d;
+                select.appendChild(opt);
+            });
+            if (Array.from(driverSet).includes(currentVal)) select.value = currentVal;
+        }
+
+        function populateCarFilterDropdown(data) {
+            let carSet = new Set();
+            data.forEach(row => {
+                let c = (row['Car Model'] || '').trim();
+                if (c) carSet.add(c);
+            });
+            let select = document.getElementById('carFilter');
+            let currentVal = select.value;
+            select.innerHTML = '<option value="ALL">🚗 All Cars</option>';
+            Array.from(carSet).sort().forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                select.appendChild(opt);
+            });
+            if (Array.from(carSet).includes(currentVal)) select.value = currentVal;
+        }
+
+        function resetFilters() {
+            document.getElementById('monthFilter').value = 'ALL';
+            document.getElementById('driverFilter').value = 'ALL';
+            document.getElementById('carFilter').value = 'ALL';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            currentSort = { key: null, dir: 1 };
+            applyFilters();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+            if (tabId === 'driverTab') renderDriverSummary(filteredDataCache);
+            if (tabId === 'carTab') renderCarSummary(filteredDataCache);
+            if (tabId === 'trendsTab') renderTrends(filteredDataCache);
         }
 
         function populateMonthDropdown(data) {
@@ -542,12 +706,17 @@
 
         function applyFilters() {
             let selectedMonth = document.getElementById('monthFilter').value;
+            let selectedDriver = document.getElementById('driverFilter').value;
+            let selectedCar = document.getElementById('carFilter').value;
+            let dateFromVal = document.getElementById('dateFrom').value;
+            let dateToVal = document.getElementById('dateTo').value;
             let searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
             filteredDataCache = allTripsData.filter(row => {
+                let dateStr = row['Timestamp'] || row['Date'];
+
                 let matchesMonth = true;
                 if (selectedMonth !== 'ALL') {
-                    let dateStr = row['Timestamp'] || row['Date'];
                     if (dateStr) {
                         let d = new Date(dateStr);
                         if (!isNaN(d.getTime())) {
@@ -557,17 +726,87 @@
                     } else { matchesMonth = false; }
                 }
 
+                let matchesDateRange = true;
+                if (dateFromVal || dateToVal) {
+                    let rowDateStr = row['Date'] || row['Timestamp'];
+                    if (rowDateStr) {
+                        let d = new Date(rowDateStr);
+                        if (!isNaN(d.getTime())) {
+                            if (dateFromVal) {
+                                let df = new Date(dateFromVal);
+                                if (d < df) matchesDateRange = false;
+                            }
+                            if (dateToVal) {
+                                let dt = new Date(dateToVal);
+                                dt.setHours(23, 59, 59, 999);
+                                if (d > dt) matchesDateRange = false;
+                            }
+                        } else { matchesDateRange = false; }
+                    } else { matchesDateRange = false; }
+                }
+
+                let matchesDriver = selectedDriver === 'ALL' || (row['Driver Name'] || '').trim() === selectedDriver;
+                let matchesCar = selectedCar === 'ALL' || (row['Car Model'] || '').trim() === selectedCar;
+
                 let driver = (row['Driver Name'] || '').toLowerCase();
                 let car = (row['Car Model'] || '').toLowerCase();
                 let start = (row['Start From'] || '').toLowerCase();
                 let end = (row['End To'] || '').toLowerCase();
                 let matchesSearch = !searchQuery || driver.includes(searchQuery) || car.includes(searchQuery) || start.includes(searchQuery) || end.includes(searchQuery);
 
-                return matchesMonth && matchesSearch;
+                return matchesMonth && matchesDateRange && matchesDriver && matchesCar && matchesSearch;
             });
 
-            renderDashboard(filteredDataCache);
+            applySortAndRender();
             renderCharts(filteredDataCache);
+
+            let activeTabBtn = document.querySelector('.tab-btn.active');
+            let activeTab = activeTabBtn ? activeTabBtn.dataset.tab : null;
+            if (activeTab === 'driverTab') renderDriverSummary(filteredDataCache);
+            if (activeTab === 'carTab') renderCarSummary(filteredDataCache);
+            if (activeTab === 'trendsTab') renderTrends(filteredDataCache);
+        }
+
+        function compareRowsForSort(a, b, key) {
+            let valA = a[key], valB = b[key];
+            if (key === 'Timestamp' || key === 'Date') {
+                let dA = new Date(valA), dB = new Date(valB);
+                if (!isNaN(dA.getTime()) && !isNaN(dB.getTime())) return dA - dB;
+            }
+            let numA = parseFloat(valA), numB = parseFloat(valB);
+            let isNumeric = valA !== '' && valA !== undefined && valB !== '' && valB !== undefined && !isNaN(numA) && !isNaN(numB);
+            if (isNumeric) return numA - numB;
+            return String(valA || '').localeCompare(String(valB || ''));
+        }
+
+        function sortTable(key) {
+            if (currentSort.key === key) {
+                currentSort.dir *= -1;
+            } else {
+                currentSort.key = key;
+                currentSort.dir = 1;
+            }
+            applySortAndRender();
+        }
+
+        function applySortAndRender() {
+            if (currentSort.key) {
+                filteredDataCache.sort((a, b) => compareRowsForSort(a, b, currentSort.key) * currentSort.dir);
+            }
+            renderDashboard(filteredDataCache);
+            updateSortIcons();
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.className = 'fa-solid fa-sort sort-icon';
+            });
+            if (currentSort.key) {
+                let icon = document.getElementById('sortIcon-' + currentSort.key);
+                if (icon) {
+                    icon.className = 'fa-solid ' + (currentSort.dir === 1 ? 'fa-sort-up' : 'fa-sort-down') + ' sort-icon active';
+                }
+            }
         }
 
         function renderDashboard(data) {
@@ -751,6 +990,196 @@
                     }
                 });
             }
+        }
+
+        function renderDriverSummary(data) {
+            let summary = {};
+            data.forEach(row => {
+                let driver = (row['Driver Name'] || '').trim() || 'Unknown';
+                if (!summary[driver]) summary[driver] = { trips: 0, km: 0, cars: new Set(), dates: [] };
+                summary[driver].trips++;
+                summary[driver].km += parseFloat(row['Total KM'] || 0);
+                if (row['Car Model']) summary[driver].cars.add(row['Car Model']);
+                let dRaw = row['Date'] || row['Timestamp'];
+                if (dRaw) {
+                    let d = new Date(dRaw);
+                    if (!isNaN(d.getTime())) summary[driver].dates.push(d);
+                }
+            });
+
+            let rows = Object.keys(summary).map(driver => {
+                let s = summary[driver];
+                let sortedDates = s.dates.sort((a, b) => a - b);
+                return {
+                    driver: driver,
+                    trips: s.trips,
+                    km: s.km,
+                    avg: s.trips > 0 ? (s.km / s.trips) : 0,
+                    cars: Array.from(s.cars).join(', ') || '-',
+                    first: sortedDates.length ? sortedDates[0].toLocaleDateString() : '-',
+                    last: sortedDates.length ? sortedDates[sortedDates.length - 1].toLocaleDateString() : '-'
+                };
+            }).sort((a, b) => b.km - a.km);
+
+            window.driverSummaryCache = rows;
+
+            let tbody = document.getElementById('driverTableBody');
+            tbody.innerHTML = rows.length ? rows.map(r => `
+                <tr>
+                    <td><b>${r.driver}</b></td>
+                    <td>${r.trips}</td>
+                    <td><b style="color: #2563eb;">${r.km.toLocaleString()} KM</b></td>
+                    <td>${r.avg.toFixed(1)} KM</td>
+                    <td>${r.cars}</td>
+                    <td>${r.first}</td>
+                    <td>${r.last}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:30px;">No data available</td></tr>';
+
+            document.getElementById('driverRecordCount').innerText = `Showing ${rows.length} drivers`;
+        }
+
+        function renderCarSummary(data) {
+            let summary = {};
+            data.forEach(row => {
+                let car = (row['Car Model'] || '').trim() || 'Unknown';
+                if (!summary[car]) summary[car] = { trips: 0, km: 0, drivers: new Set(), lastDate: null, lastDriver: '-' };
+                summary[car].trips++;
+                summary[car].km += parseFloat(row['Total KM'] || 0);
+                if (row['Driver Name']) summary[car].drivers.add(row['Driver Name']);
+                let dRaw = row['Date'] || row['Timestamp'];
+                if (dRaw) {
+                    let d = new Date(dRaw);
+                    if (!isNaN(d.getTime()) && (!summary[car].lastDate || d > summary[car].lastDate)) {
+                        summary[car].lastDate = d;
+                        summary[car].lastDriver = row['Driver Name'] || '-';
+                    }
+                }
+            });
+
+            let rows = Object.keys(summary).map(car => {
+                let s = summary[car];
+                return {
+                    car: car,
+                    trips: s.trips,
+                    km: s.km,
+                    avg: s.trips > 0 ? (s.km / s.trips) : 0,
+                    drivers: Array.from(s.drivers).join(', ') || '-',
+                    lastUsed: s.lastDate ? s.lastDate.toLocaleDateString() : '-',
+                    lastDriver: s.lastDriver
+                };
+            }).sort((a, b) => b.km - a.km);
+
+            window.carSummaryCache = rows;
+
+            let tbody = document.getElementById('carTableBody');
+            tbody.innerHTML = rows.length ? rows.map(r => `
+                <tr>
+                    <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 600;">${r.car}</span></td>
+                    <td>${r.trips}</td>
+                    <td><b style="color: #2563eb;">${r.km.toLocaleString()} KM</b></td>
+                    <td>${r.avg.toFixed(1)} KM</td>
+                    <td>${r.drivers}</td>
+                    <td>${r.lastUsed}</td>
+                    <td>${r.lastDriver}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:30px;">No data available</td></tr>';
+
+            document.getElementById('carRecordCount').innerText = `Showing ${rows.length} cars`;
+        }
+
+        function renderTrends(data) {
+            let groupBy = document.getElementById('trendGroupSelect').value;
+            let buckets = {};
+
+            data.forEach(row => {
+                let dRaw = row['Date'] || row['Timestamp'];
+                if (!dRaw) return;
+                let d = new Date(dRaw);
+                if (isNaN(d.getTime())) return;
+
+                let key;
+                if (groupBy === 'month') {
+                    key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                } else {
+                    let day = d.getDay();
+                    let diff = (day === 0 ? -6 : 1) - day;
+                    let monday = new Date(d);
+                    monday.setDate(d.getDate() + diff);
+                    key = monday.toISOString().slice(0, 10);
+                }
+
+                if (!buckets[key]) buckets[key] = { km: 0, trips: 0 };
+                buckets[key].km += parseFloat(row['Total KM'] || 0);
+                buckets[key].trips += 1;
+            });
+
+            let sortedKeys = Object.keys(buckets).sort();
+            let labels = sortedKeys.map(k => {
+                if (groupBy === 'month') {
+                    let [y, m] = k.split('-');
+                    return new Date(y, m - 1).toLocaleString('default', { month: 'short', year: 'numeric' });
+                } else {
+                    let d = new Date(k);
+                    return 'Wk of ' + d.toLocaleDateString('default', { day: 'numeric', month: 'short' });
+                }
+            });
+            let kmValues = sortedKeys.map(k => buckets[k].km);
+            let tripValues = sortedKeys.map(k => buckets[k].trips);
+
+            let ctx = document.getElementById('trendsChart').getContext('2d');
+            if (trendsChartInstance) trendsChartInstance.destroy();
+
+            trendsChartInstance = new Chart(ctx, {
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'bar', label: 'Total KM', data: kmValues, backgroundColor: '#2563eb', borderRadius: 6, yAxisID: 'y' },
+                        { type: 'line', label: 'Total Trips', data: tripValues, borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 3, tension: 0.4, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { position: 'left', ticks: { callback: value => value.toLocaleString() + ' KM' }, title: { display: true, text: 'Total KM' } },
+                        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 }, title: { display: true, text: 'Trips' } }
+                    }
+                }
+            });
+        }
+
+        function exportSummaryCSV(type) {
+            let rows, headers, filename, lines;
+
+            if (type === 'driver') {
+                rows = window.driverSummaryCache || [];
+                if (rows.length === 0) { showToast("No driver data to export!", "error"); return; }
+                headers = ['Driver Name', 'Total Trips', 'Total KM', 'Avg KM per Trip', 'Cars Driven', 'First Trip', 'Last Trip'];
+                lines = [headers.join(',')];
+                rows.forEach(r => {
+                    lines.push([`"${r.driver}"`, r.trips, r.km, r.avg.toFixed(1), `"${r.cars}"`, r.first, r.last].join(','));
+                });
+                filename = `Driver_Summary_${new Date().toISOString().slice(0,10)}.csv`;
+            } else {
+                rows = window.carSummaryCache || [];
+                if (rows.length === 0) { showToast("No car data to export!", "error"); return; }
+                headers = ['Car Model', 'Total Trips', 'Total KM', 'Avg KM per Trip', 'Drivers Used By', 'Last Used', 'Last Driven By'];
+                lines = [headers.join(',')];
+                rows.forEach(r => {
+                    lines.push([`"${r.car}"`, r.trips, r.km, r.avg.toFixed(1), `"${r.drivers}"`, r.lastUsed, `"${r.lastDriver}"`].join(','));
+                });
+                filename = `Car_Usage_Summary_${new Date().toISOString().slice(0,10)}.csv`;
+            }
+
+            let blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            showToast("Summary Exported Successfully! 📊", "success");
         }
 
         function exportToCSV() {
