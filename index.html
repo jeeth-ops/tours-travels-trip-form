@@ -156,7 +156,7 @@
                 </div>
                 <div class="form-group">
                     <label>Car Model *</label>
-                    <input type="text" id="carModel" required placeholder="Enter Car Model (e.g. Swift, Ertiga)">
+                    <select id="carModel" required></select>
                 </div>
                 <div class="form-group">
                     <label>Assigned By *</label>
@@ -336,6 +336,26 @@
     </div>
 <script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
+
+        // ▼▼▼ CAR LIST — future me nayi gaadi add karni ho toh bas yahan ek naya line jod dena ▼▼▼
+        const carList = [
+            "Ertiga White - MH05 FJ 9209",
+            "Ertiga White - MH05 FJ 6964",
+            "Ertiga White - MH05 FJ 7234"
+        ];
+        // ▲▲▲ CAR LIST END ▲▲▲
+
+        function populateCarDropdown() {
+            let select = document.getElementById('carModel');
+            select.innerHTML = '<option value="" disabled selected>Select Car</option>';
+            carList.forEach(car => {
+                let opt = document.createElement('option');
+                opt.value = car;
+                opt.innerText = car;
+                select.appendChild(opt);
+            });
+        }
+        populateCarDropdown();
 
         document.getElementById('tripDate').valueAsDate = new Date();
 
