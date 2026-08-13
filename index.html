@@ -113,7 +113,7 @@
             #dashboardSection { display: block !important; max-width: 100% !important; margin: 0; padding: 0; }
             header { box-shadow: none; border-bottom: 3px solid #0f172a; padding: 15px 0; margin-bottom: 20px; }
             header h2::before { content: "CORPORATE EXPENSE & TRIP INVOICE STATEMENT\A"; font-size: 12px; color: #64748b; display: block; font-weight: normal; }
-            .cards-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+            .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
             .card { box-shadow: none; border: 1px solid #cbd5e1; padding: 12px; }
             table { font-size: 11px; width: 100%; border: 1px solid #000; }
             th { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; }
@@ -182,31 +182,6 @@
                     <label>Total KM (Auto-Calculated)</label>
                     <input type="text" id="totalKm" readonly style="background: #f8fafc; font-weight: bold; color: #2563eb;" value="0">
                 </div>
-                <div class="form-group">
-                    <label>Night Charges (₹)</label>
-                    <input type="number" id="nightCharges" value="0" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>Food / Accommodation Expenses (₹)</label>
-                    <input type="number" id="expenses" value="0" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>Overtime (OT) Hours</label>
-                    <input type="number" id="otHours" value="0" placeholder="Hours" oninput="calculateOT()">
-                </div>
-                <div class="form-group">
-                    <label>OT Charges (₹90 / hr)</label>
-                    <input type="text" id="otCharges" readonly style="background: #f8fafc;" value="₹0">
-                </div>
-                <div class="form-group">
-                    <label>Toll & Parking Details</label>
-                    <input type="text" id="tollParking" placeholder="e.g. Mumbai Toll ₹100">
-                </div>
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label>Time & Additional Details</label>
-                    <input type="text" id="timeDetails" placeholder="Any extra notes or timings">
-                </div>
-                
                 <!-- Start Odometer Section -->
                 <div class="form-group">
                     <label>Start Odometer Photo *</label>
@@ -308,34 +283,6 @@
                 </div>
                 <div class="card-icon" style="color: #16a34a; background: #f0fdf4;"><i class="fa-solid fa-gauge-high"></i></div>
             </div>
-            <div class="card" style="border-left-color: #d97706;">
-                <div class="card-info">
-                    <h4>Night Charges</h4>
-                    <p id="totalNight">₹ 0</p>
-                </div>
-                <div class="card-icon" style="color: #d97706; background: #fffbeb;"><i class="fa-solid fa-moon"></i></div>
-            </div>
-            <div class="card" style="border-left-color: #06b6d4;">
-                <div class="card-info">
-                    <h4>Food & Expenses</h4>
-                    <p id="totalFood">₹ 0</p>
-                </div>
-                <div class="card-icon" style="color: #06b6d4; background: #ecfeff;"><i class="fa-solid fa-utensils"></i></div>
-            </div>
-            <div class="card" style="border-left-color: #9333ea;">
-                <div class="card-info">
-                    <h4>OT Charges</h4>
-                    <p id="totalOt">₹ 0</p>
-                </div>
-                <div class="card-icon" style="color: #9333ea; background: #faf5ff;"><i class="fa-solid fa-clock"></i></div>
-            </div>
-            <div class="card" style="border-left-color: #ef4444;">
-                <div class="card-info">
-                    <h4>Total Expense Outflow</h4>
-                    <p id="totalExpenseOutflow">₹ 0</p>
-                </div>
-                <div class="card-icon" style="color: #ef4444; background: #fef2f2;"><i class="fa-solid fa-wallet"></i></div>
-            </div>
         </div>
 
         <!-- Dynamic Professional Chart Section with Select Chart Option -->
@@ -348,7 +295,6 @@
                         <option value="doughnut">🍩 Doughnut Chart (Car Model Share)</option>
                         <option value="bar">📊 Bar Chart (KM by Car Model)</option>
                         <option value="line">📈 Line Chart (KM Trend Over Dates)</option>
-                        <option value="expenses">💸 Bar Chart (Expense Outflow Breakdown)</option>
                     </select>
                 </div>
                 <div style="position: relative; height: 360px; width: 100%;">
@@ -379,9 +325,6 @@
                         <th>Start From</th>
                         <th>End To</th>
                         <th>Total KM</th>
-                        <th>Night (₹)</th>
-                        <th>Expenses (₹)</th>
-                        <th>OT (₹)</th>
                         <th>Assigned By</th>
                         <th>Start Odometer</th>
                         <th>End Odometer</th>
@@ -413,12 +356,6 @@
             let end = parseFloat(document.getElementById('endKm').value) || 0;
             let total = end >= start ? end - start : 0;
             document.getElementById('totalKm').value = total;
-        }
-
-        function calculateOT() {
-            let hours = parseFloat(document.getElementById('otHours').value) || 0;
-            let charges = hours * 90;
-            document.getElementById('otCharges').value = "₹" + charges;
         }
 
         function setOdometerFile(type, input) {
@@ -474,12 +411,6 @@
                         startKm: startKm,
                         endKm: endKm,
                         totalKm: document.getElementById('totalKm').value,
-                        nightCharges: document.getElementById('nightCharges').value || 0,
-                        expenses: document.getElementById('expenses').value || 0,
-                        otHours: document.getElementById('otHours').value || 0,
-                        otCharges: (parseFloat(document.getElementById('otHours').value) || 0) * 90,
-                        tollParking: document.getElementById('tollParking').value,
-                        timeDetails: document.getElementById('timeDetails').value,
                         startImage: startBase64,
                         startImageName: fileStart.name,
                         endImage: endBase64,
@@ -496,7 +427,6 @@
                         document.getElementById('tripForm').reset();
                         document.getElementById('tripDate').valueAsDate = new Date();
                         document.getElementById('totalKm').value = "0";
-                        document.getElementById('otCharges').value = "₹0";
                         removeOdometerFile('start');
                         removeOdometerFile('end');
                         btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
@@ -622,21 +552,15 @@
 
         function renderDashboard(data) {
             let totalTrips = data.length;
-            let sumKm = 0, sumNight = 0, sumFood = 0, sumOt = 0;
+            let sumKm = 0;
 
             let tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
             data.forEach(row => {
                 let km = parseFloat(row['Total KM'] || 0);
-                let night = parseFloat(row['Night Charges'] || 0);
-                let food = parseFloat(row['Food/Acc. Expenses'] || 0);
-                let ot = parseFloat(row['OT Charges (₹90)'] || 0);
 
                 sumKm += km;
-                sumNight += night;
-                sumFood += food;
-                sumOt += ot;
 
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -647,9 +571,6 @@
                     <td>${row['Start From'] || ''}</td>
                     <td>${row['End To'] || ''}</td>
                     <td><b style="color: #2563eb;">${km.toLocaleString()} KM</b></td>
-                    <td>₹${night.toLocaleString()}</td>
-                    <td>₹${food.toLocaleString()}</td>
-                    <td>₹${ot.toLocaleString()}</td>
                     <td>${row['Assigned By'] || ''}</td>
                     <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
                     <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
@@ -657,14 +578,8 @@
                 tbody.appendChild(tr);
             });
 
-            let totalOutflow = sumNight + sumFood + sumOt;
-
             document.getElementById('totalTrips').innerText = totalTrips.toLocaleString();
             document.getElementById('totalKmCard').innerText = sumKm.toLocaleString() + ' KM';
-            document.getElementById('totalNight').innerText = '₹ ' + sumNight.toLocaleString();
-            document.getElementById('totalFood').innerText = '₹ ' + sumFood.toLocaleString();
-            document.getElementById('totalOt').innerText = '₹ ' + sumOt.toLocaleString();
-            document.getElementById('totalExpenseOutflow').innerText = '₹ ' + totalOutflow.toLocaleString();
             document.getElementById('recordCount').innerText = `Showing ${totalTrips} entries`;
 
             document.getElementById('loadingText').style.display = 'none';
@@ -812,45 +727,6 @@
                         scales: {
                             x: { grid: { display: false } },
                             y: { ticks: { callback: function(value) { return value.toLocaleString() + ' KM'; } } }
-                        }
-                    }
-                });
-            }
-            else if (chartType === 'expenses') {
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-wallet" style="color: #8b5cf6;"></i> Comprehensive Expense Outflow Breakdown (Enterprise Analytics)';
-                let totalNight = 0, totalFood = 0, totalOt = 0;
-                data.forEach(row => {
-                    totalNight += parseFloat(row['Night Charges'] || 0);
-                    totalFood += parseFloat(row['Food/Acc. Expenses'] || 0);
-                    totalOt += parseFloat(row['OT Charges (₹90)'] || 0);
-                });
-
-                let totalOutflow = totalNight + totalFood + totalOt;
-
-                dynamicChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Night Charges', 'Food / Acc. Expenses', 'Overtime (OT) Charges'],
-                        datasets: [{ label: 'Amount (₹)', data: [totalNight, totalFood, totalOt], backgroundColor: ['#d97706', '#06b6d4', '#8b5cf6'], borderRadius: 8 }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let val = context.raw || 0;
-                                        let pct = totalOutflow > 0 ? ((val / totalOutflow) * 100).toFixed(1) : 0;
-                                        return ` Amount: ₹${val.toLocaleString()} (${pct}% of total outflow)`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { grid: { display: false } },
-                            y: { ticks: { callback: function(value) { return '₹' + value.toLocaleString(); } } }
                         }
                     }
                 });
