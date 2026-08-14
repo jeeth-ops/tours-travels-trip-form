@@ -1040,7 +1040,7 @@
         };
         let dynamicChartInstance = null;
         let trendsChartInstance = null;
-        let currentSort = { key: null, dir: 1 };
+        let currentSort = { key: 'Timestamp', dir: -1 };
 
         function fetchAdminData() {
             fetch(scriptURL)
@@ -1112,7 +1112,7 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
-            currentSort = { key: null, dir: 1 };
+            currentSort = { key: 'Timestamp', dir: -1 };
             hideSuggestions();
             applyFilters();
         }
