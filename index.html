@@ -38,6 +38,9 @@
 
     <!-- Chart.js & FontAwesome -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF + AutoTable for branded PDF reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <style>
@@ -73,6 +76,11 @@
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
             --skeleton-base: #e9e9ec;
             --skeleton-shine: #f6f6f8;
+            --blur-nav: 24px;
+            --blur-toast: 20px;
+            --blur-modal: 8px;
+            --blur-sheet: 6px;
+            --saturate-amt: 180%;
         }
         html[data-theme="dark"] {
             --bg: #000000;
@@ -129,8 +137,8 @@
             font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg);
             display: flex; align-items: center; gap: 10px;
             animation: toastIn 0.45s var(--spring);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(var(--blur-toast)) saturate(var(--saturate-amt));
+            -webkit-backdrop-filter: blur(var(--blur-toast)) saturate(var(--saturate-amt));
             transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
             pointer-events: auto;
         }
@@ -144,7 +152,7 @@
         /* ============ TOP NAV ============ */
         .top-nav {
             max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center;
-            background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            background: var(--surface); backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt)); -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt));
             padding: 15px 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border);
             animation: dropIn 0.5s var(--spring);
         }
@@ -189,7 +197,7 @@
             backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
             transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease);
         }
-        #loginModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        #loginModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(var(--blur-modal)); -webkit-backdrop-filter: blur(var(--blur-modal)); }
         .login-box {
             background: var(--surface-solid); padding: 36px 32px; border-radius: 26px; width: 380px; max-width: 88vw; text-align: center;
             box-shadow: var(--shadow-lg); border: 1px solid var(--border);
@@ -221,7 +229,7 @@
 
         header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-            background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            background: var(--surface); backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt)); -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt));
             padding: 20px 24px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border);
             flex-wrap: wrap; gap: 15px; animation: dropIn 0.5s var(--spring);
         }
@@ -465,7 +473,7 @@
         /* ============ BOTTOM NAV BAR ============ */
         #bottomNav {
             position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
-            background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            background: var(--surface); backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt)); -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt));
             border-top: 1px solid var(--border); padding: 8px 6px calc(8px + env(safe-area-inset-bottom)) 6px;
             justify-content: center; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
         }
@@ -1022,6 +1030,14 @@
 
         let allTripsData = [];
         let filteredDataCache = [];
+
+        // ---- Branding for PDF Reports (edit these for your company) ----
+        const REPORT_BRAND = {
+            companyName: "Tours & Travels Portal",
+            tagline: "Fleet Operations & Trip Report",
+            accentColor: [10, 132, 255],   // RGB for --accent (#0a84ff)
+            darkColor: [15, 23, 42]        // RGB for --header-bg (#0f172a)
+        };
         let dynamicChartInstance = null;
         let trendsChartInstance = null;
         let currentSort = { key: null, dir: 1 };
@@ -1903,8 +1919,174 @@
             showToast("Excel (CSV) Exported Successfully! 📊", "success");
         }
 
+        function computeDriverSummary_(data) {
+            let summary = {};
+            data.forEach(row => {
+                let driver = (row['Driver Name'] || '').trim() || 'Unknown';
+                if (!summary[driver]) summary[driver] = { trips: 0, km: 0, cars: new Set() };
+                summary[driver].trips++;
+                summary[driver].km += parseFloat(row['Total KM'] || 0);
+                if (row['Car Model']) summary[driver].cars.add(row['Car Model']);
+            });
+            return Object.keys(summary).map(driver => {
+                let s = summary[driver];
+                return {
+                    driver: driver, trips: s.trips, km: s.km,
+                    avg: s.trips > 0 ? (s.km / s.trips) : 0,
+                    cars: Array.from(s.cars).join(', ') || '-'
+                };
+            }).sort((a, b) => b.km - a.km);
+        }
+
+        function computeCarSummary_(data) {
+            let summary = {};
+            data.forEach(row => {
+                let car = normCar(row['Car Model']) || 'UNKNOWN';
+                if (!summary[car]) summary[car] = { trips: 0, km: 0, drivers: new Set() };
+                summary[car].trips++;
+                summary[car].km += parseFloat(row['Total KM'] || 0);
+                if (row['Driver Name']) summary[car].drivers.add(row['Driver Name']);
+            });
+            return Object.keys(summary).map(car => {
+                let s = summary[car];
+                return {
+                    car: car, trips: s.trips, km: s.km,
+                    avg: s.trips > 0 ? (s.km / s.trips) : 0,
+                    drivers: Array.from(s.drivers).join(', ') || '-'
+                };
+            }).sort((a, b) => b.km - a.km);
+        }
+
         function exportToPDF() {
-            window.print();
+            if (!filteredDataCache || filteredDataCache.length === 0) {
+                showToast("No data available to generate report!", "error");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 40;
+            const accent = REPORT_BRAND.accentColor;
+            const dark = REPORT_BRAND.darkColor;
+
+            // ---- Derived stats ----
+            const driverRows = computeDriverSummary_(filteredDataCache);
+            const carRows = computeCarSummary_(filteredDataCache);
+            const totalTrips = filteredDataCache.length;
+            const totalKm = filteredDataCache.reduce((sum, r) => sum + (parseFloat(r['Total KM']) || 0), 0);
+            const avgKm = totalTrips ? (totalKm / totalTrips) : 0;
+            const topDriver = driverRows.length ? driverRows[0].driver : '-';
+            const topCar = carRows.length ? carRows[0].car : '-';
+
+            let dates = filteredDataCache
+                .map(r => new Date(r['Date'] || r['Timestamp']))
+                .filter(d => !isNaN(d.getTime()))
+                .sort((a, b) => a - b);
+            let rangeText = dates.length
+                ? `${dates[0].toLocaleDateString()} — ${dates[dates.length - 1].toLocaleDateString()}`
+                : 'All available records';
+
+            // ---- Header band ----
+            doc.setFillColor(dark[0], dark[1], dark[2]);
+            doc.rect(0, 0, pageWidth, 90, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text(REPORT_BRAND.companyName, margin, 40);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(200, 210, 225);
+            doc.text(REPORT_BRAND.tagline, margin, 60);
+            doc.setFontSize(9);
+            doc.text(`Report period: ${rangeText}`, margin, 76);
+
+            doc.setFontSize(9);
+            doc.setTextColor(200, 210, 225);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth - margin, 40, { align: 'right' });
+
+            // ---- Summary stat cards ----
+            let cardY = 112;
+            let cardH = 62;
+            let gap = 12;
+            let cardW = (pageWidth - margin * 2 - gap * 3) / 4;
+            const cards = [
+                { label: 'TOTAL TRIPS', value: totalTrips.toLocaleString() },
+                { label: 'TOTAL KM', value: totalKm.toLocaleString() + ' km' },
+                { label: 'AVG KM / TRIP', value: avgKm.toFixed(1) + ' km' },
+                { label: 'TOP DRIVER', value: topDriver }
+            ];
+            cards.forEach((c, i) => {
+                let x = margin + i * (cardW + gap);
+                doc.setFillColor(245, 247, 250);
+                doc.roundedRect(x, cardY, cardW, cardH, 8, 8, 'F');
+                doc.setTextColor(120, 128, 140);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.text(c.label, x + 10, cardY + 20);
+                doc.setTextColor(accent[0], accent[1], accent[2]);
+                doc.setFontSize(13);
+                let valText = doc.splitTextToSize(String(c.value), cardW - 20);
+                doc.text(valText, x + 10, cardY + 40);
+            });
+
+            let afterCardsY = cardY + cardH + 30;
+
+            // ---- Driver Summary Table ----
+            doc.setTextColor(dark[0], dark[1], dark[2]);
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Driver Summary', margin, afterCardsY);
+
+            doc.autoTable({
+                startY: afterCardsY + 10,
+                head: [['Driver', 'Trips', 'Total KM', 'Avg KM/Trip', 'Cars Driven']],
+                body: driverRows.map(r => [r.driver, r.trips, r.km.toLocaleString(), r.avg.toFixed(1), r.cars]),
+                margin: { left: margin, right: margin },
+                headStyles: { fillColor: dark, textColor: 255, fontSize: 9, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9, textColor: [40, 40, 45] },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                styles: { cellPadding: 6 }
+            });
+
+            // ---- Car Summary Table ----
+            let carTableY = doc.lastAutoTable.finalY + 30;
+            if (carTableY > doc.internal.pageSize.getHeight() - 150) {
+                doc.addPage();
+                carTableY = 40;
+            }
+            doc.setTextColor(dark[0], dark[1], dark[2]);
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Car Usage Summary', margin, carTableY);
+
+            doc.autoTable({
+                startY: carTableY + 10,
+                head: [['Car Model', 'Trips', 'Total KM', 'Avg KM/Trip', 'Drivers Used By']],
+                body: carRows.map(r => [r.car, r.trips, r.km.toLocaleString(), r.avg.toFixed(1), r.drivers]),
+                margin: { left: margin, right: margin },
+                headStyles: { fillColor: accent, textColor: 255, fontSize: 9, fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9, textColor: [40, 40, 45] },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                styles: { cellPadding: 6 }
+            });
+
+            // ---- Footer on every page ----
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                let pageH = doc.internal.pageSize.getHeight();
+                doc.setDrawColor(230, 230, 235);
+                doc.line(margin, pageH - 40, pageWidth - margin, pageH - 40);
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 158);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Generated via ${REPORT_BRAND.companyName}`, margin, pageH - 26);
+                doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageH - 26, { align: 'right' });
+            }
+
+            doc.save(`Fleet_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            showToast("Branded PDF Report Generated! 📄", "success");
         }
     </script>
 </body>
