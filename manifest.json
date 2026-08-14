@@ -1,11 +1,11 @@
 {
-  "name": "All Sports Live - Driver Portal",
-  "short_name": "All Sports Live",
+  "name": "Tours & Travels Portal - Driver App",
+  "short_name": "Tours Portal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#FF6600", 
-  "description": "Live Sports Management Portal for Drivers",
+  "background_color": "#f2f2f7",
+  "theme_color": "#0a84ff",
+  "description": "Driver trip logging & fleet analytics portal for Tours & Travels",
   "icons": [
     {
       "src": "192-192.png",
