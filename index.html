@@ -347,8 +347,13 @@
         .skel-card .skeleton:nth-child(3) { width: 40%; margin-bottom: 0; }
 
         /* ============ MOBILE CARD VIEW FOR TRIP LOG ============ */
+        @keyframes tripCardIn { from { opacity: 0; transform: translateY(28px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes countPulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
         #tripCardsList { display: none; margin-bottom: 100px; }
-        .trip-card-wrap { position: relative; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+        .trip-card-wrap {
+            position: relative; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; box-shadow: var(--shadow-sm);
+            opacity: 0; animation: tripCardIn 0.6s var(--spring) both;
+        }
         .trip-card-actions {
             position: absolute; top: 0; right: 0; bottom: 0; width: 150px; display: flex;
             background: var(--accent); border-radius: var(--radius-md);
@@ -361,10 +366,12 @@
         .trip-card-actions button:nth-child(2) { background: rgba(255,255,255,0.15); }
         .trip-card {
             position: relative; background: var(--surface-solid); border: 1px solid var(--border); border-radius: var(--radius-md);
-            padding: 16px; touch-action: pan-y; transition: transform 0.25s var(--ease);
-            display: flex; flex-direction: column; gap: 8px;
+            padding: 16px; touch-action: pan-y; transition: transform 0.45s var(--spring), box-shadow 0.25s var(--ease);
+            display: flex; flex-direction: column; gap: 8px; will-change: transform;
         }
         .trip-card.swiping { transition: none; }
+        .trip-card:active { transform: scale(0.985); box-shadow: var(--shadow-sm); }
+        .trip-card.swiping:active { transform: none; }
         .trip-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .trip-card-driver { font-size: 15.5px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
         .trip-card-date { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
@@ -1263,6 +1270,35 @@
             }
         }
 
+        // ============ ANIMATED NUMBER COUNTER (ease-out count-up) ============
+        function animateCounter(el, endValue, suffix = '') {
+            if (!el) return;
+            let startValue = parseFloat((el.dataset.rawValue || '0'));
+            if (isNaN(startValue)) startValue = 0;
+            if (startValue === endValue) { el.innerText = endValue.toLocaleString() + suffix; return; }
+
+            el.dataset.rawValue = endValue;
+            const duration = 900;
+            const startTime = performance.now();
+            const easeOutExpo = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+
+            function tick(now) {
+                let progress = Math.min((now - startTime) / duration, 1);
+                let eased = easeOutExpo(progress);
+                let current = Math.round(startValue + (endValue - startValue) * eased);
+                el.innerText = current.toLocaleString() + suffix;
+                if (progress < 1) {
+                    requestAnimationFrame(tick);
+                } else {
+                    el.innerText = endValue.toLocaleString() + suffix;
+                    el.style.animation = 'none';
+                    void el.offsetWidth; // restart pulse
+                    el.style.animation = 'countPulse 0.4s var(--spring)';
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
         function renderDashboard(data) {
             let totalTrips = data.length;
             let sumKm = 0;
@@ -1295,6 +1331,7 @@
                 // Mobile swipeable card
                 let wrap = document.createElement('div');
                 wrap.className = 'trip-card-wrap';
+                wrap.style.animationDelay = `${Math.min(idx * 45, 480)}ms`;
                 wrap.innerHTML = `
                     <div class="trip-card-actions">
                         <button onclick="openSheet(${idx})"><i class="fa-solid fa-image"></i>Photos</button>
@@ -1317,8 +1354,8 @@
                 cardsList.appendChild(wrap);
             });
 
-            document.getElementById('totalTrips').innerText = totalTrips.toLocaleString();
-            document.getElementById('totalKmCard').innerText = sumKm.toLocaleString() + ' KM';
+            animateCounter(document.getElementById('totalTrips'), totalTrips, '');
+            animateCounter(document.getElementById('totalKmCard'), sumKm, ' KM');
             document.getElementById('recordCount').innerText = `Showing ${totalTrips} entries`;
 
             document.getElementById('loadingText').style.display = 'none';
