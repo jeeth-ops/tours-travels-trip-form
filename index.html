@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
     <title>Tours & Travels Portal</title>
 
     <!-- ▼▼▼ PWA MOBILE APP INTEGRATION TAGS ▼▼▼ -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#f2f2f7" id="metaThemeColor">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Tours Portal">
     <link rel="apple-touch-icon" href="192-192.png">
-    
+
     <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
@@ -25,103 +25,386 @@
     </script>
     <!-- ▲▲▲ PWA TAGS END ▲▲▲ -->
 
+    <!-- Apply saved theme before paint (avoids flash) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('theme');
+          var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Chart.js & FontAwesome -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f1f5f9; padding: 20px; color: #1e293b; }
-        
-        button i, .btn i, .admin-trigger-btn i, .submit-btn i { pointer-events: none; }
+        :root {
+            --bg: #f2f2f7;
+            --bg-solid: #f2f2f7;
+            --surface: rgba(255,255,255,0.78);
+            --surface-solid: #ffffff;
+            --surface-2: #ffffff;
+            --border: rgba(60,60,67,0.12);
+            --border-strong: rgba(60,60,67,0.18);
+            --text: #1c1c1e;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #aeaeb2;
+            --accent: #0a84ff;
+            --accent-rgb: 10,132,255;
+            --accent-2: #34c759;
+            --accent-2-rgb: 52,199,89;
+            --danger: #ff3b30;
+            --danger-rgb: 255,59,48;
+            --warning: #ff9f0a;
+            --purple: #af52de;
+            --cyan: #32ade6;
+            --pink: #ff2d55;
+            --header-bg: #0f172a;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+            --shadow-lg: 0 20px 50px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --skeleton-base: #e9e9ec;
+            --skeleton-shine: #f6f6f8;
+        }
+        html[data-theme="dark"] {
+            --bg: #000000;
+            --bg-solid: #000000;
+            --surface: rgba(28,28,30,0.78);
+            --surface-solid: #1c1c1e;
+            --surface-2: #2c2c2e;
+            --border: rgba(255,255,255,0.09);
+            --border-strong: rgba(255,255,255,0.14);
+            --text: #f5f5f7;
+            --text-secondary: #98989f;
+            --text-tertiary: #636366;
+            --header-bg: #000000;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.5);
+            --shadow-lg: 0 20px 50px rgba(0,0,0,0.6);
+            --skeleton-base: #2c2c2e;
+            --skeleton-shine: #3a3a3c;
+        }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            transition: background 0.35s var(--ease), color 0.35s var(--ease);
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: contain;
+            animation: pageIn 0.5s var(--ease);
+        }
+        @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+
+        button, input, select { font-family: inherit; }
+        button i, .btn i, .admin-trigger-btn i, .submit-btn i { pointer-events: none; }
+        button { -webkit-appearance: none; }
+        button:active { transform: scale(0.96); }
+        .btn:active, .admin-trigger-btn:active, .tab-btn:active, .icon-btn:active { transform: scale(0.94); }
+
+        a { color: var(--accent); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+
+        /* ============ TOASTS ============ */
         #toastContainer {
-            position: fixed; top: 20px; right: 20px; z-index: 9999;
-            display: flex; flex-direction: column; gap: 10px;
+            position: fixed; top: max(20px, env(safe-area-inset-top)); right: 20px; left: 20px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px; align-items: flex-end; pointer-events: none;
         }
         .toast {
-            min-width: 280px; padding: 14px 20px; border-radius: 10px; color: white;
-            font-size: 14px; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out;
+            min-width: 260px; max-width: 380px; padding: 14px 18px; border-radius: var(--radius-sm); color: white;
+            font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; gap: 10px;
+            animation: toastIn 0.45s var(--spring);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+            pointer-events: auto;
         }
-        .toast.success { background: #16a34a; }
-        .toast.error { background: #dc2626; }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .toast.success { background: rgba(52,199,89,0.92); }
+        .toast.error { background: rgba(255,59,48,0.92); }
+        @keyframes toastIn {
+            0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
         }
 
-        .top-nav { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .top-nav h1 { font-size: 20px; color: #0f172a; display: flex; align-items: center; gap: 10px; }
-        .admin-trigger-btn { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .admin-trigger-btn:hover { background: #e2e8f0; color: #0f172a; }
+        /* ============ TOP NAV ============ */
+        .top-nav {
+            max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center;
+            background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            padding: 15px 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+            animation: dropIn 0.5s var(--spring);
+        }
+        @keyframes dropIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+        .top-nav h1 { font-size: 19px; color: var(--text); display: flex; align-items: center; gap: 10px; letter-spacing: -0.3px; }
+        .nav-right { display: flex; align-items: center; gap: 10px; }
 
-        .form-container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .form-container h2 { margin-bottom: 20px; color: #0f172a; font-size: 22px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s; background: #fff; }
-        .form-group input:focus, .form-group select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .icon-btn {
+            width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--surface-2);
+            color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px;
+            transition: transform 0.25s var(--spring), background 0.25s var(--ease);
+        }
+        .icon-btn:hover { background: var(--border); }
 
+        .admin-trigger-btn {
+            background: var(--surface-2); border: 1px solid var(--border-strong); padding: 9px 16px; border-radius: 999px;
+            font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text); display: flex; align-items: center; gap: 6px;
+            transition: transform 0.25s var(--spring), background 0.25s var(--ease);
+        }
+        .admin-trigger-btn:hover { background: var(--border); }
+
+        /* ============ FORM ============ */
+        .form-container {
+            max-width: 1000px; margin: 0 auto; background: var(--surface-solid); padding: 28px; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md); border: 1px solid var(--border);
+            animation: cardIn 0.55s var(--spring) 0.05s both;
+        }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .form-container h2 { margin-bottom: 22px; color: var(--text); font-size: 21px; letter-spacing: -0.4px; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 13px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 15px;
+            outline: none; transition: 0.2s var(--ease); background: var(--surface-2); color: var(--text);
+        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.15); }
+
+        /* ============ LOGIN MODAL ============ */
         #loginModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
+            background: rgba(0,0,0,0); display: none; justify-content: center; align-items: center; z-index: 1000;
+            backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
+            transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease);
         }
-        .login-box { background: white; padding: 35px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.3); }
-        .login-box i { font-size: 40px; color: #2563eb; margin-bottom: 15px; }
-        .login-box h3 { margin-bottom: 20px; color: #0f172a; font-size: 22px; }
-        .login-box input { width: 100%; padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; margin-bottom: 15px; font-size: 16px; outline: none; }
-        .login-box button { width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .login-box .close-modal { margin-top: 10px; background: none; border: none; color: #64748b; cursor: pointer; font-size: 13px; }
+        #loginModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .login-box {
+            background: var(--surface-solid); padding: 36px 32px; border-radius: 26px; width: 380px; max-width: 88vw; text-align: center;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            transform: scale(0.85) translateY(20px); opacity: 0; transition: transform 0.4s var(--spring), opacity 0.3s var(--ease);
+        }
+        #loginModal.open .login-box { transform: scale(1) translateY(0); opacity: 1; }
+        .login-box i { font-size: 38px; color: var(--accent); margin-bottom: 14px; }
+        .login-box h3 { margin-bottom: 20px; color: var(--text); font-size: 21px; letter-spacing: -0.3px; }
+        .login-box input {
+            width: 100%; padding: 15px; border: 1px solid var(--border-strong); border-radius: 14px; margin-bottom: 15px;
+            font-size: 16px; outline: none; background: var(--surface-2); color: var(--text); transition: 0.2s var(--ease);
+        }
+        .login-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.15); }
+        .login-box button:not(.close-modal) {
+            width: 100%; background: var(--accent); color: white; border: none; padding: 15px; border-radius: 14px;
+            font-weight: 700; font-size: 16px; cursor: pointer; transition: transform 0.2s var(--spring), opacity 0.2s;
+        }
+        .login-box .close-modal { margin-top: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; }
 
-        #dashboardSection { display: none; max-width: 1350px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 20px 25px; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
-        header h2 { color: #0f172a; font-size: 22px; display: flex; align-items: center; gap: 10px; }
-        header h2 i { color: #2563eb; }
-        
-        .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-        .btn { padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; font-size: 14px; transition: 0.2s; }
-        .btn-export { background: #16a34a; color: white; }
-        .btn-pdf { background: #dc2626; color: white; }
-        .btn-back { background: #475569; color: white; }
+        /* ============ DASHBOARD ============ */
+        #dashboardSection { display: none; max-width: 1350px; margin: 0 auto; position: relative; }
+        #pullToRefreshIndicator {
+            display: flex; align-items: center; justify-content: center; height: 0; overflow: hidden;
+            color: var(--accent); font-size: 22px; transition: height 0.2s var(--ease);
+        }
+        #pullToRefreshIndicator i { transition: transform 0.15s linear; }
+        #pullToRefreshIndicator.spinning i { animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 25px; }
-        .card { background: white; padding: 20px; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; border-left: 6px solid #2563eb; }
-        .card-info h4 { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .card-info p { font-size: 22px; font-weight: bold; color: #0f172a; }
-        .card-icon { width: 45px; height: 45px; border-radius: 12px; background: #eff6ff; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #2563eb; }
+        header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            padding: 20px 24px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+            flex-wrap: wrap; gap: 15px; animation: dropIn 0.5s var(--spring);
+        }
+        header h2 { color: var(--text); font-size: 21px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.3px; }
+        header h2 i { color: var(--accent); }
 
-        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px; }
-        .chart-card { background: white; padding: 24px; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .chart-header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-        .chart-card h3 { font-size: 16px; color: #0f172a; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn {
+            padding: 10px 16px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; display: flex;
+            align-items: center; gap: 8px; font-size: 13.5px; transition: transform 0.2s var(--spring), filter 0.2s var(--ease);
+        }
+        .btn:hover { filter: brightness(1.06); }
+        .btn-export { background: var(--accent-2); color: white; }
+        .btn-pdf { background: var(--danger); color: white; }
+        .btn-back { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); }
 
-        .filter-box { background: white; padding: 18px 22px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
-        .search-input, .select-input { flex: 1; min-width: 240px; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; outline: none; background: white; }
-        .record-count { font-size: 14px; color: #64748b; font-weight: 600; margin-left: auto; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 22px; }
+        .card {
+            background: var(--surface-solid); padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border);
+            transition: transform 0.25s var(--spring), box-shadow 0.25s var(--ease); animation: cardIn 0.5s var(--spring) both;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .card-info h4 { font-size: 11.5px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 700; }
+        .card-info p { font-size: 23px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+        .card-icon { width: 46px; height: 46px; border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 19px; }
 
-        .tabs-nav { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex-wrap: wrap; }
-        .tab-btn { background: transparent; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; font-size: 14px; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .tab-btn:hover { background: #f1f5f9; color: #0f172a; }
-        .tab-btn.active { background: #2563eb; color: white; }
-        .tab-content { display: none; }
+        .analytics-grid { display: grid; grid-template-columns: 1fr; gap: 18px; margin-bottom: 22px; }
+        .chart-card {
+            background: var(--surface-solid); padding: 22px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border); animation: cardIn 0.5s var(--spring) both;
+        }
+        .chart-header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 14px; }
+        .chart-card h3 { font-size: 15.5px; color: var(--text); font-weight: 700; display: flex; align-items: center; gap: 10px; letter-spacing: -0.2px; }
+
+        .filter-box {
+            background: var(--surface-solid); padding: 16px 20px; border-radius: var(--radius-md); margin-bottom: 16px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+        }
+        .search-input, .select-input {
+            flex: 1; min-width: 220px; padding: 12px 15px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+            font-size: 14px; outline: none; background: var(--surface-2); color: var(--text); transition: 0.2s var(--ease);
+        }
+        .search-input:focus, .select-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.15); }
+        .record-count { font-size: 13.5px; color: var(--text-secondary); font-weight: 600; margin-left: auto; }
+
+        .search-wrap { position: relative; flex: 1; min-width: 220px; }
+        .search-wrap .search-input { width: 100%; min-width: 0; }
+        .search-suggestions {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--surface-solid);
+            border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); overflow: hidden;
+            z-index: 60; opacity: 0; transform: translateY(-8px) scale(0.98); pointer-events: none;
+            transition: opacity 0.2s var(--ease), transform 0.2s var(--spring); max-height: 280px; overflow-y: auto;
+        }
+        .search-suggestions.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .sugg-item {
+            padding: 11px 15px; font-size: 13.5px; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 10px;
+            transition: background 0.15s var(--ease); border-bottom: 1px solid var(--border);
+        }
+        .sugg-item:last-child { border-bottom: none; }
+        .sugg-item:hover, .sugg-item.hl { background: rgba(var(--accent-rgb),0.1); }
+        .sugg-item .tag { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); background: var(--surface-2); padding: 2px 7px; border-radius: 6px; margin-left: auto; }
+        .sugg-item mark { background: rgba(var(--accent-rgb),0.22); color: var(--accent); border-radius: 3px; padding: 0 1px; }
+
+        .tabs-nav {
+            display: flex; gap: 6px; background: var(--surface-solid); padding: 7px; border-radius: var(--radius-md);
+            margin-bottom: 18px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: transparent; border: none; padding: 10px 16px; border-radius: 11px; font-weight: 600; font-size: 13.5px;
+            color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 8px;
+            transition: transform 0.2s var(--spring), background 0.2s var(--ease), color 0.2s var(--ease);
+        }
+        .tab-btn:hover { background: var(--border); color: var(--text); }
+        .tab-btn.active { background: var(--accent); color: white; }
+        .tab-content { display: none; animation: fadeSwitch 0.35s var(--ease); }
         .tab-content.active { display: block; }
+        @keyframes fadeSwitch { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
         table th.sortable { cursor: pointer; user-select: none; }
-        table th.sortable:hover { background: #1e293b; }
+        table th.sortable:hover { background: #1c2942; }
         .sort-icon { font-size: 11px; margin-left: 5px; opacity: 0.5; }
         .sort-icon.active { opacity: 1; color: #60a5fa; }
 
-        .table-container { background: white; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 40px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th { background: #0f172a; color: white; padding: 15px 14px; font-weight: 600; white-space: nowrap; }
-        td { padding: 14px; border-bottom: 1px solid #e2e8f0; color: #334155; white-space: nowrap; }
-        tr:hover { background: #f8fafc; }
-        .loading { text-align: center; padding: 50px; font-size: 18px; color: #64748b; }
-        a.photo-link { background: #eff6ff; color: #2563eb; padding: 6px 12px; border-radius: 6px; font-weight: 600; text-decoration: none; border: 1px solid #bfdbfe; }
+        .table-container {
+            background: var(--surface-solid); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+            overflow-x: auto; margin-bottom: 40px; border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+        th { background: var(--header-bg); color: white; padding: 15px 14px; font-weight: 600; white-space: nowrap; }
+        td { padding: 14px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+        tr { transition: background 0.15s var(--ease); }
+        tr:hover { background: rgba(var(--accent-rgb),0.05); }
+        .loading { text-align: center; padding: 50px; font-size: 17px; color: var(--text-secondary); }
+        a.photo-link {
+            background: rgba(var(--accent-rgb),0.1); color: var(--accent); padding: 6px 12px; border-radius: 8px;
+            font-weight: 600; text-decoration: none; border: 1px solid rgba(var(--accent-rgb),0.25); display: inline-flex; align-items: center; gap: 6px;
+        }
+
+        /* ============ SKELETON LOADERS ============ */
+        .skeleton {
+            background: linear-gradient(100deg, var(--skeleton-base) 30%, var(--skeleton-shine) 50%, var(--skeleton-base) 70%);
+            background-size: 250% 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 120% 0; } 100% { background-position: -20% 0; } }
+        .skel-row { display: flex; gap: 14px; padding: 16px; align-items: center; border-bottom: 1px solid var(--border); }
+        .skel-row .skeleton:nth-child(1) { width: 34%; height: 14px; }
+        .skel-row .skeleton:nth-child(2) { width: 18%; height: 14px; }
+        .skel-row .skeleton:nth-child(3) { width: 22%; height: 14px; }
+        .skel-row .skeleton:nth-child(4) { width: 14%; height: 14px; }
+        .skel-card { padding: 16px; border-radius: var(--radius-md); background: var(--surface-solid); border: 1px solid var(--border); margin-bottom: 12px; }
+        .skel-card .skeleton { height: 12px; margin-bottom: 10px; }
+        .skel-card .skeleton:nth-child(1) { width: 55%; height: 15px; }
+        .skel-card .skeleton:nth-child(2) { width: 80%; }
+        .skel-card .skeleton:nth-child(3) { width: 40%; margin-bottom: 0; }
+
+        /* ============ MOBILE CARD VIEW FOR TRIP LOG ============ */
+        #tripCardsList { display: none; margin-bottom: 100px; }
+        .trip-card-wrap { position: relative; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+        .trip-card-actions {
+            position: absolute; top: 0; right: 0; bottom: 0; width: 150px; display: flex;
+            background: var(--accent); border-radius: var(--radius-md);
+        }
+        .trip-card-actions button {
+            flex: 1; border: none; background: transparent; color: white; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 5px; font-size: 11px; font-weight: 700; cursor: pointer;
+        }
+        .trip-card-actions button i { font-size: 16px; }
+        .trip-card-actions button:nth-child(2) { background: rgba(255,255,255,0.15); }
+        .trip-card {
+            position: relative; background: var(--surface-solid); border: 1px solid var(--border); border-radius: var(--radius-md);
+            padding: 16px; touch-action: pan-y; transition: transform 0.25s var(--ease);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .trip-card.swiping { transition: none; }
+        .trip-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .trip-card-driver { font-size: 15.5px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+        .trip-card-date { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-top: 2px; }
+        .trip-card-km { font-size: 15px; font-weight: 800; color: var(--accent); white-space: nowrap; }
+        .trip-card-route { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .trip-card-route b { color: var(--text); font-weight: 600; }
+        .trip-card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+        .trip-card-car-tag {
+            background: var(--surface-2); color: var(--text); padding: 4px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 700;
+        }
+        .trip-card-hint { font-size: 10.5px; color: var(--text-tertiary); display: flex; align-items: center; gap: 4px; }
+
+        /* ============ BOTTOM SHEET (photo details) ============ */
+        #bottomSheetOverlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0); z-index: 1100; display: none;
+            transition: background 0.3s var(--ease);
+        }
+        #bottomSheetOverlay.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+        #bottomSheet {
+            position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface-solid);
+            border-radius: 26px 26px 0 0; padding: 10px 22px calc(26px + env(safe-area-inset-bottom)) 22px;
+            box-shadow: var(--shadow-lg); transform: translateY(100%); transition: transform 0.4s var(--spring);
+            z-index: 1101; max-width: 600px; margin: 0 auto; border: 1px solid var(--border); border-bottom: none;
+        }
+        #bottomSheetOverlay.open #bottomSheet { transform: translateY(0); }
+        .sheet-handle { width: 40px; height: 5px; background: var(--border-strong); border-radius: 10px; margin: 10px auto 16px auto; }
+        .sheet-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.3px; }
+        .sheet-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+        .sheet-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .sheet-row span:first-child { color: var(--text-secondary); font-weight: 600; }
+        .sheet-row span:last-child { font-weight: 700; }
+        .sheet-photos { display: flex; gap: 12px; margin-top: 18px; }
+        .sheet-photo-btn {
+            flex: 1; text-align: center; padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border-strong);
+            color: var(--text); text-decoration: none; font-weight: 700; font-size: 13px; display: flex; flex-direction: column; gap: 8px; align-items: center;
+        }
+        .sheet-photo-btn i { font-size: 20px; color: var(--accent); }
+        .sheet-close-btn {
+            width: 100%; margin-top: 18px; padding: 14px; border: none; border-radius: 14px; background: var(--surface-2);
+            color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer;
+        }
+
+        /* ============ BOTTOM NAV (mobile) ============ */
+        #bottomNav { display: none; }
 
         @media print {
             body { background: white; padding: 0; color: black; }
-            .top-nav, #loginModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav { display: none !important; }
+            .top-nav, #loginModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav, #bottomNav, #bottomSheetOverlay, #tripCardsList { display: none !important; }
             #dashboardSection { display: block !important; max-width: 100% !important; margin: 0; padding: 0; }
             header { box-shadow: none; border-bottom: 3px solid #0f172a; padding: 15px 0; margin-bottom: 20px; }
             header h2::before { content: "CORPORATE EXPENSE & TRIP INVOICE STATEMENT\A"; font-size: 12px; color: #64748b; display: block; font-weight: normal; }
@@ -130,7 +413,7 @@
             table { font-size: 11px; width: 100%; border: 1px solid #000; }
             th { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; }
             td, th { padding: 8px; border: 1px solid #cbd5e1; }
-            
+
             #dashboardSection::after {
                 content: "\A\A Authorized Signature: __________________________        Date: ____/____/________";
                 white-space: pre;
@@ -140,6 +423,61 @@
                 font-size: 13px;
             }
         }
+
+        /* ============ MOBILE RESPONSIVE ============ */
+        @media (max-width: 760px) {
+            body { padding: 14px; padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+            .top-nav { padding: 13px 16px; }
+            .top-nav h1 { font-size: 16px; }
+            .form-container { padding: 20px 16px; border-radius: 20px; }
+            header { padding: 16px; }
+            header h2 { font-size: 18px; }
+            .header-brand-box span { font-size: 10.5px; }
+            .header-actions .btn span.btn-label { display: none; }
+            .header-actions .btn { padding: 10px 12px; }
+            .cards-grid { grid-template-columns: repeat(2, 1fr); }
+
+            /* hide desktop tabs-nav + table, show bottom nav + cards */
+            .tabs-nav { display: none; }
+            #tripLogTab .table-container { display: none; }
+            #tripCardsList { display: block; }
+            #bottomNav { display: flex; }
+            body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+
+            /* responsive card-style tables for driver/car summary */
+            #driverTab .table-container, #carTab .table-container { overflow: visible; background: transparent; border: none; box-shadow: none; }
+            #driverTab table, #carTab table { border-collapse: separate; border-spacing: 0 10px; }
+            #driverTab thead, #carTab thead { display: none; }
+            #driverTab tr, #carTab tr {
+                display: block; background: var(--surface-solid); border-radius: var(--radius-md); border: 1px solid var(--border);
+                box-shadow: var(--shadow-sm); padding: 6px 4px;
+            }
+            #driverTab td, #carTab td {
+                display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px;
+                border-bottom: 1px dashed var(--border); white-space: normal; text-align: right;
+            }
+            #driverTab td:last-child, #carTab td:last-child { border-bottom: none; }
+            #driverTab td::before, #carTab td::before {
+                content: attr(data-label); font-size: 11px; font-weight: 700; color: var(--text-secondary);
+                text-transform: uppercase; letter-spacing: 0.3px; text-align: left;
+            }
+        }
+
+        /* ============ BOTTOM NAV BAR ============ */
+        #bottomNav {
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 900;
+            background: var(--surface); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid var(--border); padding: 8px 6px calc(8px + env(safe-area-inset-bottom)) 6px;
+            justify-content: space-around; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+        }
+        .bnav-btn {
+            background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px;
+            color: var(--text-tertiary); font-size: 10.5px; font-weight: 600; cursor: pointer; padding: 6px 10px; border-radius: 12px;
+            transition: color 0.2s var(--ease), transform 0.2s var(--spring); flex: 1;
+        }
+        .bnav-btn i { font-size: 19px; transition: transform 0.2s var(--spring); }
+        .bnav-btn.active { color: var(--accent); }
+        .bnav-btn.active i { transform: translateY(-2px) scale(1.08); }
     </style>
 </head>
 <body>
@@ -147,10 +485,25 @@
     <!-- Toast Notification Container -->
     <div id="toastContainer"></div>
 
+    <!-- Bottom Sheet: Trip Photo Details -->
+    <div id="bottomSheetOverlay" onclick="if(event.target===this) closeSheet()">
+        <div id="bottomSheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title" id="sheetTitle">Trip Details</div>
+            <div class="sheet-sub" id="sheetSub">—</div>
+            <div id="sheetRows"></div>
+            <div class="sheet-photos" id="sheetPhotos"></div>
+            <button class="sheet-close-btn" onclick="closeSheet()">Close</button>
+        </div>
+    </div>
+
     <!-- Top Bar with Secret Admin Access -->
     <div class="top-nav" id="topNav">
-        <h1><i class="fa-solid fa-car-side" style="color: #2563eb;"></i> Tours & Travels Portal</h1>
-        <button class="admin-trigger-btn" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Admin Portal</button>
+        <h1><i class="fa-solid fa-car-side" style="color: var(--accent);"></i> Tours & Travels Portal</h1>
+        <div class="nav-right">
+            <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
+            <button class="admin-trigger-btn" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Admin Portal</button>
+        </div>
     </div>
 
     <!-- DRIVER SUBMISSION FORM SECTION -->
@@ -192,22 +545,22 @@
                 </div>
                 <div class="form-group">
                     <label>Total KM (Auto-Calculated)</label>
-                    <input type="text" id="totalKm" readonly style="background: #f8fafc; font-weight: bold; color: #2563eb;" value="0">
+                    <input type="text" id="totalKm" readonly style="background: var(--surface-2); font-weight: bold; color: var(--accent);" value="0">
                 </div>
                 <!-- Start Odometer Section -->
                 <div class="form-group">
                     <label>Start Odometer Photo *</label>
                     <div id="startActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
-                        <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                        <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-camera"></i> Open Camera
                         </button>
-                        <button type="button" onclick="document.getElementById('startGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                        <button type="button" onclick="document.getElementById('startGalInput').click()" style="flex: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-image"></i> Choose Gallery
                         </button>
                     </div>
-                    <div id="startPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
-                        <span id="startFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
-                        <button type="button" onclick="removeOdometerFile('start')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <div id="startPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: rgba(var(--accent-2-rgb),0.1); border: 1px solid var(--accent-2); padding: 9px 12px; border-radius: 10px; margin-bottom: 4px;">
+                        <span id="startFileLabel" style="font-size: 12px; color: var(--accent-2); font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('start')" style="background: var(--danger); color: white; border: none; padding: 7px 10px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                             <i class="fa-solid fa-trash"></i> Delete / Retake
                         </button>
                     </div>
@@ -220,16 +573,16 @@
                 <div class="form-group">
                     <label>End Odometer Photo *</label>
                     <div id="endActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
-                        <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: #2563eb; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                        <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-camera"></i> Open Camera
                         </button>
-                        <button type="button" onclick="document.getElementById('endGalInput').click()" style="flex: 1; background: #4b5563; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                        <button type="button" onclick="document.getElementById('endGalInput').click()" style="flex: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-image"></i> Choose Gallery
                         </button>
                     </div>
-                    <div id="endPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #16a34a; padding: 8px 12px; border-radius: 8px; margin-bottom: 4px;">
-                        <span id="endFileLabel" style="font-size: 12px; color: #16a34a; font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
-                        <button type="button" onclick="removeOdometerFile('end')" style="background: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <div id="endPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: rgba(var(--accent-2-rgb),0.1); border: 1px solid var(--accent-2); padding: 9px 12px; border-radius: 10px; margin-bottom: 4px;">
+                        <span id="endFileLabel" style="font-size: 12px; color: var(--accent-2); font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('end')" style="background: var(--danger); color: white; border: none; padding: 7px 10px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
                             <i class="fa-solid fa-trash"></i> Delete / Retake
                         </button>
                     </div>
@@ -241,7 +594,7 @@
 
             <!-- Submit Button Section -->
             <div class="form-group" style="margin-top: 20px;">
-                <button type="submit" id="submitBtn" style="width: 100%; background: #16a34a; color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <button type="submit" id="submitBtn" style="width: 100%; background: var(--accent-2); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                     <i class="fa-solid fa-paper-plane"></i> Submit Details
                 </button>
             </div>
@@ -257,47 +610,47 @@
             <button onclick="verifyLogin()">Login to Dashboard</button>
             <br>
             <button class="close-modal" onclick="closeLoginModal()">Cancel</button>
-            <p id="errorMsg" style="color: #ef4444; font-size: 13px; margin-top: 10px; display: none;">Incorrect Password!</p>
+            <p id="errorMsg" style="color: var(--danger); font-size: 13px; margin-top: 10px; display: none;">Incorrect Password!</p>
         </div>
     </div>
 
     <!-- ENTERPRISE ADMIN DASHBOARD SECTION -->
 <div id="dashboardSection">
+    <div id="pullToRefreshIndicator"><i class="fa-solid fa-arrows-rotate"></i></div>
     <header>
         <div class="header-brand-box">
-            <span style="font-size: 12px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">
+            <span style="font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">
                 <i class="fa-solid fa-building-shield"></i> Travels Company Name / Fleet Portal
             </span>
-            <h2 style="font-size: 20px; color: #0f172a; display: flex; align-items: center; gap: 10px;">
-                <i class="fa-solid fa-chart-line" style="color: #2563eb;"></i> Tours & Travels Enterprise Analytics
-            </h2>
+            <h2><i class="fa-solid fa-chart-line" style="color: var(--accent);"></i> Tours & Travels Enterprise Analytics</h2>
         </div>
         <div class="header-actions">
-            <button class="btn btn-export" onclick="exportToCSV()"><i class="fa-solid fa-file-excel"></i> Excel (CSV)</button>
-            <button class="btn btn-pdf" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf"></i> Save PDF Report</button>
-            <button class="btn btn-back" onclick="logoutAdmin()"><i class="fa-solid fa-arrow-left"></i> Back to Form</button>
+            <button class="icon-btn" onclick="toggleTheme()" title="Toggle dark mode"><i class="fa-solid fa-moon" id="dashThemeIcon"></i></button>
+            <button class="btn btn-export" onclick="exportToCSV()"><i class="fa-solid fa-file-excel"></i> <span class="btn-label">Excel (CSV)</span></button>
+            <button class="btn btn-pdf" onclick="exportToPDF()"><i class="fa-solid fa-file-pdf"></i> <span class="btn-label">Save PDF Report</span></button>
+            <button class="btn btn-back" onclick="logoutAdmin()"><i class="fa-solid fa-arrow-left"></i> <span class="btn-label">Back to Form</span></button>
         </div>
     </header>
 
         <!-- Summary Metric Cards -->
         <div class="cards-grid">
-            <div class="card" style="border-left-color: #2563eb;">
+            <div class="card" style="border-left: 5px solid var(--accent);">
                 <div class="card-info">
                     <h4>Total Trips</h4>
                     <p id="totalTrips">0</p>
                 </div>
-                <div class="card-icon" style="color: #2563eb; background: #eff6ff;"><i class="fa-solid fa-route"></i></div>
+                <div class="card-icon" style="color: var(--accent); background: rgba(var(--accent-rgb),0.12);"><i class="fa-solid fa-route"></i></div>
             </div>
-            <div class="card" style="border-left-color: #16a34a;">
+            <div class="card" style="border-left: 5px solid var(--accent-2);">
                 <div class="card-info">
                     <h4>Total KM Driven</h4>
                     <p id="totalKmCard">0 KM</p>
                 </div>
-                <div class="card-icon" style="color: #16a34a; background: #f0fdf4;"><i class="fa-solid fa-gauge-high"></i></div>
+                <div class="card-icon" style="color: var(--accent-2); background: rgba(var(--accent-2-rgb),0.12);"><i class="fa-solid fa-gauge-high"></i></div>
             </div>
         </div>
 
-        <!-- Tab Navigation -->
+        <!-- Tab Navigation (desktop) -->
         <div class="tabs-nav" id="tabsNav">
             <button class="tab-btn active" data-tab="tripLogTab" onclick="switchTab('tripLogTab')"><i class="fa-solid fa-list"></i> Trip Records</button>
             <button class="tab-btn" data-tab="driverTab" onclick="switchTab('driverTab')"><i class="fa-solid fa-id-card"></i> Driver Summary</button>
@@ -311,7 +664,7 @@
             <div class="analytics-grid">
                 <div class="chart-card">
                     <div class="chart-header-controls">
-                        <h3 id="chartTitle"><i class="fa-solid fa-chart-pie" style="color: #2563eb;"></i> Fleet Analytics Visualizer</h3>
+                        <h3 id="chartTitle"><i class="fa-solid fa-chart-pie" style="color: var(--accent);"></i> Fleet Analytics Visualizer</h3>
                         <select id="chartTypeSelect" class="select-input" style="max-width: 280px;" onchange="applyFilters()">
                             <option value="pie" selected>🥧 Pie Chart (Driver KM Distribution)</option>
                             <option value="doughnut">🍩 Doughnut Chart (Car Model Share)</option>
@@ -336,20 +689,24 @@
                 <select id="carFilter" class="select-input" onchange="applyFilters()">
                     <option value="ALL">🚗 All Cars</option>
                 </select>
-                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Driver, Car Model, Location..." onkeyup="applyFilters()">
+                <div class="search-wrap">
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Driver, Car Model, Location..." autocomplete="off"
+                        onkeyup="handleSearchKeyup(event)" oninput="renderSearchSuggestions()" onfocus="renderSearchSuggestions()" onblur="hideSuggestionsSoon()">
+                    <div class="search-suggestions" id="searchSuggestions"></div>
+                </div>
             </div>
 
             <!-- Filters Row 2: Custom Date Range -->
             <div class="filter-box">
-                <label style="font-weight: 600; font-size: 13px; color: #475569; white-space: nowrap;">📆 Custom Date Range:</label>
+                <label style="font-weight: 600; font-size: 13px; color: var(--text-secondary); white-space: nowrap;">📆 Custom Date Range:</label>
                 <input type="date" id="dateFrom" class="select-input" style="max-width: 180px;" onchange="applyFilters()">
-                <span style="color: #94a3b8; font-weight: 600;">to</span>
+                <span style="color: var(--text-tertiary); font-weight: 600;">to</span>
                 <input type="date" id="dateTo" class="select-input" style="max-width: 180px;" onchange="applyFilters()">
                 <button class="btn btn-back" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filters</button>
                 <span class="record-count" id="recordCount">Showing 0 entries</span>
             </div>
 
-            <!-- Table Container -->
+            <!-- Table Container (desktop) -->
             <div class="table-container">
                 <div id="loadingText" class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Fetching live enterprise data...</div>
                 <table id="tripTable" style="display: none;">
@@ -370,6 +727,9 @@
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
+
+            <!-- Mobile swipeable card list -->
+            <div id="tripCardsList"></div>
         </div>
 
         <!-- TAB: DRIVER SUMMARY -->
@@ -424,7 +784,7 @@
         <div class="tab-content" id="trendsTab">
             <div class="chart-card">
                 <div class="chart-header-controls">
-                    <h3><i class="fa-solid fa-chart-line" style="color: #2563eb;"></i> KM & Trip Volume Trend</h3>
+                    <h3><i class="fa-solid fa-chart-line" style="color: var(--accent);"></i> KM & Trip Volume Trend</h3>
                     <select id="trendGroupSelect" class="select-input" style="max-width: 220px;" onchange="renderTrends(filteredDataCache)">
                         <option value="week" selected>📅 Weekly</option>
                         <option value="month">📅 Monthly</option>
@@ -436,6 +796,16 @@
             </div>
         </div>
     </div>
+
+    <!-- BOTTOM NAV (mobile app-style) -->
+    <div id="bottomNav">
+        <button class="bnav-btn active" data-tab="tripLogTab" onclick="switchTab('tripLogTab')"><i class="fa-solid fa-list"></i>Trips</button>
+        <button class="bnav-btn" data-tab="driverTab" onclick="switchTab('driverTab')"><i class="fa-solid fa-id-card"></i>Drivers</button>
+        <button class="bnav-btn" data-tab="carTab" onclick="switchTab('carTab')"><i class="fa-solid fa-car"></i>Cars</button>
+        <button class="bnav-btn" data-tab="trendsTab" onclick="switchTab('trendsTab')"><i class="fa-solid fa-chart-line"></i>Trends</button>
+        <button class="bnav-btn" onclick="triggerRefresh()"><i class="fa-solid fa-arrows-rotate"></i>Refresh</button>
+    </div>
+
 <script>
         const scriptURL = "https://script.google.com/macros/s/AKfycbwfR6H3NVtblah0n1t8toy5VKFnw-ycPamEkJPY2mG-kwQLGqXzbgTOjPGeKSGzNOkJ/exec";
 
@@ -446,6 +816,25 @@
             "ERTIGA WHITE - MH05 FJ 7234"
         ];
         // ▲▲▲ CAR LIST END ▲▲▲
+
+        // ============ THEME (Dark / Light) ============
+        function applyThemeIcon() {
+            let theme = document.documentElement.getAttribute('data-theme');
+            let icon = theme === 'dark' ? 'fa-sun' : 'fa-moon';
+            document.querySelectorAll('#themeToggleBtn i, #dashThemeIcon').forEach(el => {
+                el.className = 'fa-solid ' + icon;
+            });
+            let meta = document.getElementById('metaThemeColor');
+            if (meta) meta.setAttribute('content', theme === 'dark' ? '#000000' : '#f2f2f7');
+        }
+        function toggleTheme() {
+            let current = document.documentElement.getAttribute('data-theme') || 'light';
+            let next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('theme', next); } catch (e) {}
+            applyThemeIcon();
+        }
+        applyThemeIcon();
 
         // Car name ko hamesha ek jaisa (UPPERCASE, trimmed) banata hai, taaki "Bolero" aur "BOLERO" alag-alag na dikhein
         function normCar(v) {
@@ -474,6 +863,7 @@
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-14px) scale(0.95)';
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
@@ -604,10 +994,14 @@
         }
 
         function openLoginModal() {
-            document.getElementById('loginModal').style.display = 'flex';
+            let m = document.getElementById('loginModal');
+            m.style.display = 'flex';
+            requestAnimationFrame(() => m.classList.add('open'));
         }
         function closeLoginModal() {
-            document.getElementById('loginModal').style.display = 'none';
+            let m = document.getElementById('loginModal');
+            m.classList.remove('open');
+            setTimeout(() => { m.style.display = 'none'; }, 300);
             document.getElementById('adminPass').value = '';
             document.getElementById('errorMsg').style.display = 'none';
         }
@@ -618,7 +1012,9 @@
                 document.getElementById('topNav').style.display = 'none';
                 document.getElementById('driverFormSection').style.display = 'none';
                 document.getElementById('dashboardSection').style.display = 'block';
+                renderSkeletons();
                 fetchAdminData();
+                setupPullToRefresh();
             } else {
                 document.getElementById('errorMsg').style.display = 'block';
             }
@@ -647,8 +1043,19 @@
             })
             .catch(err => {
                 console.error(err);
-                document.getElementById('loadingText').innerHTML = '<span style="color: #ef4444;">Failed to load data.</span>';
+                document.getElementById('loadingText').innerHTML = '<span style="color: var(--danger);">Failed to load data.</span>';
+            })
+            .finally(() => {
+                endPullToRefresh();
             });
+        }
+
+        function triggerRefresh() {
+            renderSkeletons();
+            let ind = document.getElementById('pullToRefreshIndicator');
+            ind.style.height = '46px';
+            ind.classList.add('spinning');
+            fetchAdminData();
         }
 
         function populateDriverFilterDropdown(data) {
@@ -695,6 +1102,7 @@
             document.getElementById('dateFrom').value = '';
             document.getElementById('dateTo').value = '';
             currentSort = { key: null, dir: 1 };
+            hideSuggestions();
             applyFilters();
         }
 
@@ -702,6 +1110,9 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+            document.querySelectorAll('.bnav-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tabId);
             });
             if (tabId === 'driverTab') renderDriverSummary(filteredDataCache);
@@ -725,7 +1136,7 @@
             let sortedMonths = Array.from(monthSet).sort().reverse();
             let select = document.getElementById('monthFilter');
             select.innerHTML = '<option value="ALL">📅 All Months (Lifetime Report)</option>';
-            
+
             sortedMonths.forEach(ym => {
                 let [year, month] = ym.split('-');
                 let monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -847,26 +1258,52 @@
 
             let tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
+            let cardsList = document.getElementById('tripCardsList');
+            cardsList.innerHTML = '';
 
-            data.forEach(row => {
+            data.forEach((row, idx) => {
                 let km = parseFloat(row['Total KM'] || 0);
-
                 sumKm += km;
 
+                // Desktop table row
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row['Timestamp'] ? new Date(row['Timestamp']).toLocaleString() : ''}</td>
                     <td><b>${row['Driver Name'] || ''}</b></td>
                     <td>${row['Date'] || ''}</td>
-                    <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 600;">${normCar(row['Car Model'])}</span></td>
+                    <td><span style="background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-weight: 600;">${normCar(row['Car Model'])}</span></td>
                     <td>${row['Start From'] || ''}</td>
                     <td>${row['End To'] || ''}</td>
-                    <td><b style="color: #2563eb;">${km.toLocaleString()} KM</b></td>
+                    <td><b style="color: var(--accent);">${km.toLocaleString()} KM</b></td>
                     <td>${row['Assigned By'] || ''}</td>
                     <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
                     <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
                 `;
                 tbody.appendChild(tr);
+
+                // Mobile swipeable card
+                let wrap = document.createElement('div');
+                wrap.className = 'trip-card-wrap';
+                wrap.innerHTML = `
+                    <div class="trip-card-actions">
+                        <button onclick="openSheet(${idx})"><i class="fa-solid fa-image"></i>Photos</button>
+                    </div>
+                    <div class="trip-card" data-idx="${idx}">
+                        <div class="trip-card-top">
+                            <div>
+                                <div class="trip-card-driver">${row['Driver Name'] || 'Unknown'}</div>
+                                <div class="trip-card-date">${row['Date'] || ''}</div>
+                            </div>
+                            <div class="trip-card-km">${km.toLocaleString()} KM</div>
+                        </div>
+                        <div class="trip-card-route"><i class="fa-solid fa-location-dot" style="color: var(--accent-2);"></i> <b>${row['Start From'] || '—'}</b> <i class="fa-solid fa-arrow-right" style="color: var(--text-tertiary); font-size:10px;"></i> <b>${row['End To'] || '—'}</b></div>
+                        <div class="trip-card-meta">
+                            <span class="trip-card-car-tag">${normCar(row['Car Model'])}</span>
+                            <span class="trip-card-hint"><i class="fa-solid fa-chevron-left"></i> swipe for photos</span>
+                        </div>
+                    </div>
+                `;
+                cardsList.appendChild(wrap);
             });
 
             document.getElementById('totalTrips').innerText = totalTrips.toLocaleString();
@@ -875,6 +1312,239 @@
 
             document.getElementById('loadingText').style.display = 'none';
             document.getElementById('tripTable').style.display = 'table';
+
+            window.currentRenderedRows = data;
+            setupSwipeCards();
+        }
+
+        // ============ SKELETON LOADERS ============
+        function renderSkeletons() {
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('tripTable').style.display = 'none';
+            let cardsList = document.getElementById('tripCardsList');
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                html += `<div class="skel-card"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>`;
+            }
+            cardsList.innerHTML = html;
+
+            let tcontainer = document.getElementById('tableBody').closest('.table-container');
+            let skelRows = '';
+            for (let i = 0; i < 6; i++) {
+                skelRows += `<div class="skel-row"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>`;
+            }
+            let existingSkel = tcontainer.querySelector('.skel-table-loader');
+            if (!existingSkel) {
+                let d = document.createElement('div');
+                d.className = 'skel-table-loader';
+                d.innerHTML = skelRows;
+                tcontainer.appendChild(d);
+            }
+        }
+        function clearTableSkeleton() {
+            let tcontainer = document.getElementById('tableBody').closest('.table-container');
+            let skel = tcontainer.querySelector('.skel-table-loader');
+            if (skel) skel.remove();
+        }
+
+        // ============ SWIPE GESTURE (mobile trip cards) ============
+        function setupSwipeCards() {
+            document.querySelectorAll('.trip-card').forEach(card => {
+                let startX = 0, currentX = 0, dragging = false, opened = false;
+                const maxSwipe = -140;
+
+                function onStart(e) {
+                    dragging = true;
+                    startX = (e.touches ? e.touches[0].clientX : e.clientX);
+                    card.classList.add('swiping');
+                }
+                function onMove(e) {
+                    if (!dragging) return;
+                    currentX = (e.touches ? e.touches[0].clientX : e.clientX);
+                    let delta = currentX - startX;
+                    let base = opened ? maxSwipe : 0;
+                    let translate = Math.min(0, Math.max(maxSwipe, base + delta));
+                    card.style.transform = `translateX(${translate}px)`;
+                }
+                function onEnd() {
+                    if (!dragging) return;
+                    dragging = false;
+                    card.classList.remove('swiping');
+                    let delta = currentX - startX;
+                    let base = opened ? maxSwipe : 0;
+                    let finalPos = base + delta;
+                    opened = finalPos < maxSwipe / 2;
+                    card.style.transform = opened ? `translateX(${maxSwipe}px)` : 'translateX(0)';
+                    currentX = startX = 0;
+                }
+
+                card.addEventListener('touchstart', onStart, { passive: true });
+                card.addEventListener('touchmove', onMove, { passive: true });
+                card.addEventListener('touchend', onEnd);
+                card.addEventListener('mousedown', onStart);
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('mouseup', onEnd);
+
+                card.addEventListener('click', () => {
+                    if (!opened) openSheet(parseInt(card.dataset.idx));
+                });
+            });
+        }
+
+        // ============ BOTTOM SHEET: trip photo details ============
+        function openSheet(idx) {
+            let row = (window.currentRenderedRows || [])[idx];
+            if (!row) return;
+            let km = parseFloat(row['Total KM'] || 0);
+            document.getElementById('sheetTitle').innerText = row['Driver Name'] || 'Trip Details';
+            document.getElementById('sheetSub').innerText = `${row['Date'] || ''} • ${normCar(row['Car Model'])}`;
+            document.getElementById('sheetRows').innerHTML = `
+                <div class="sheet-row"><span>Route</span><span>${row['Start From'] || '—'} → ${row['End To'] || '—'}</span></div>
+                <div class="sheet-row"><span>Total KM</span><span>${km.toLocaleString()} KM</span></div>
+                <div class="sheet-row"><span>Assigned By</span><span>${row['Assigned By'] || '—'}</span></div>
+            `;
+            let photosHtml = '';
+            photosHtml += row['Start Image Link']
+                ? `<a href="${row['Start Image Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-camera"></i>Start Odometer</a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-camera"></i>No Start Photo</div>`;
+            photosHtml += row['End Image Link']
+                ? `<a href="${row['End Image Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-camera"></i>End Odometer</a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-camera"></i>No End Photo</div>`;
+            document.getElementById('sheetPhotos').innerHTML = photosHtml;
+
+            let overlay = document.getElementById('bottomSheetOverlay');
+            overlay.style.display = 'block';
+            requestAnimationFrame(() => overlay.classList.add('open'));
+        }
+        function closeSheet() {
+            let overlay = document.getElementById('bottomSheetOverlay');
+            overlay.classList.remove('open');
+            setTimeout(() => { overlay.style.display = 'none'; }, 350);
+        }
+
+        // ============ SEARCH WITH LIVE SUGGESTIONS ============
+        let suggHideTimer = null;
+        let highlightedIdx = -1;
+        function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+        function highlightMatch(text, q) {
+            if (!q) return text;
+            let re = new RegExp('(' + escRe(q) + ')', 'ig');
+            return text.replace(re, '<mark>$1</mark>');
+        }
+        function renderSearchSuggestions() {
+            let q = document.getElementById('searchInput').value.trim().toLowerCase();
+            let box = document.getElementById('searchSuggestions');
+            if (!q) { hideSuggestions(); return; }
+
+            let seen = new Set();
+            let results = [];
+            (allTripsData || []).forEach(row => {
+                let candidates = [
+                    { val: (row['Driver Name'] || '').trim(), tag: 'Driver' },
+                    { val: normCar(row['Car Model']), tag: 'Car' },
+                    { val: (row['Start From'] || '').trim(), tag: 'Location' },
+                    { val: (row['End To'] || '').trim(), tag: 'Location' }
+                ];
+                candidates.forEach(c => {
+                    if (c.val && c.val.toLowerCase().includes(q)) {
+                        let key = c.tag + ':' + c.val.toLowerCase();
+                        if (!seen.has(key)) { seen.add(key); results.push(c); }
+                    }
+                });
+            });
+            results = results.slice(0, 7);
+
+            if (results.length === 0) { hideSuggestions(); return; }
+
+            highlightedIdx = -1;
+            box.innerHTML = results.map((r, i) => `
+                <div class="sugg-item" data-i="${i}" onmousedown="pickSuggestion('${r.val.replace(/'/g, "\\'")}')">
+                    <i class="fa-solid ${r.tag === 'Driver' ? 'fa-user' : r.tag === 'Car' ? 'fa-car' : 'fa-location-dot'}" style="color: var(--text-tertiary); width:14px;"></i>
+                    <span>${highlightMatch(r.val, q)}</span>
+                    <span class="tag">${r.tag}</span>
+                </div>
+            `).join('');
+            box.classList.add('open');
+        }
+        function pickSuggestion(val) {
+            document.getElementById('searchInput').value = val;
+            hideSuggestions();
+            applyFilters();
+        }
+        function hideSuggestions() {
+            document.getElementById('searchSuggestions').classList.remove('open');
+        }
+        function hideSuggestionsSoon() {
+            suggHideTimer = setTimeout(hideSuggestions, 150);
+        }
+        function handleSearchKeyup(e) {
+            let box = document.getElementById('searchSuggestions');
+            let items = Array.from(box.querySelectorAll('.sugg-item'));
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (items.length === 0) return;
+                items.forEach(it => it.classList.remove('hl'));
+                if (e.key === 'ArrowDown') highlightedIdx = (highlightedIdx + 1) % items.length;
+                else highlightedIdx = (highlightedIdx - 1 + items.length) % items.length;
+                items[highlightedIdx].classList.add('hl');
+                items[highlightedIdx].scrollIntoView({ block: 'nearest' });
+                return;
+            }
+            if (e.key === 'Enter') {
+                if (highlightedIdx >= 0 && items[highlightedIdx]) {
+                    items[highlightedIdx].dispatchEvent(new Event('mousedown'));
+                }
+                hideSuggestions();
+                applyFilters();
+                return;
+            }
+            if (e.key === 'Escape') { hideSuggestions(); return; }
+            applyFilters();
+        }
+
+        // ============ PULL TO REFRESH ============
+        function setupPullToRefresh() {
+            let dashboard = document.getElementById('dashboardSection');
+            let indicator = document.getElementById('pullToRefreshIndicator');
+            let startY = 0, pulling = false, triggered = false;
+            const threshold = 70;
+
+            dashboard.ontouchstart = (e) => {
+                if (window.scrollY <= 0) {
+                    startY = e.touches[0].clientY;
+                    pulling = true;
+                    triggered = false;
+                }
+            };
+            dashboard.ontouchmove = (e) => {
+                if (!pulling) return;
+                let delta = e.touches[0].clientY - startY;
+                if (delta > 0 && window.scrollY <= 0) {
+                    let h = Math.min(delta * 0.5, 90);
+                    indicator.style.height = h + 'px';
+                    indicator.classList.toggle('spinning', h > threshold);
+                    triggered = h > threshold;
+                }
+            };
+            dashboard.ontouchend = () => {
+                if (!pulling) return;
+                pulling = false;
+                if (triggered) {
+                    indicator.style.height = '46px';
+                    indicator.classList.add('spinning');
+                    renderSkeletons();
+                    fetchAdminData();
+                } else {
+                    indicator.style.height = '0px';
+                    indicator.classList.remove('spinning');
+                }
+            };
+        }
+        function endPullToRefresh() {
+            let indicator = document.getElementById('pullToRefreshIndicator');
+            indicator.classList.remove('spinning');
+            indicator.style.height = '0px';
+            clearTableSkeleton();
         }
 
         function renderCharts(data) {
@@ -885,10 +1555,11 @@
                 dynamicChartInstance.destroy();
             }
 
-            const corporatePalette = ['#2563eb', '#10b981', '#f59e0b', '#06b6d4', '#8b5cf6', '#ef4444', '#ec4899', '#64748b'];
+            const corporatePalette = ['#0a84ff', '#34c759', '#ff9f0a', '#32ade6', '#af52de', '#ff3b30', '#ff2d55', '#8e8e93'];
+            const legendColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#1e293b';
 
             if (chartType === 'pie') {
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-pie" style="color: #2563eb;"></i> Driver KM Distribution (Enterprise Analytics)';
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-pie" style="color: var(--accent);"></i> Driver KM Distribution (Enterprise Analytics)';
                 let driverKm = {};
                 data.forEach(row => {
                     let driver = (row['Driver Name'] || 'Unknown').trim();
@@ -912,7 +1583,7 @@
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: { boxWidth: 14, padding: 15, font: { size: 12, weight: '600' }, color: '#1e293b' }
+                                labels: { boxWidth: 14, padding: 15, font: { size: 12, weight: '600' }, color: legendColor }
                             },
                             tooltip: {
                                 callbacks: {
@@ -926,9 +1597,9 @@
                         }
                     }
                 });
-            } 
+            }
             else if (chartType === 'doughnut') {
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-pie" style="color: #10b981;"></i> Car Model KM Share (Enterprise Analytics)';
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-pie" style="color: var(--accent-2);"></i> Car Model KM Share (Enterprise Analytics)';
                 let carKm = {};
                 data.forEach(row => {
                     let car = normCar(row['Car Model']) || 'UNKNOWN';
@@ -952,7 +1623,7 @@
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: { boxWidth: 14, padding: 15, font: { size: 12, weight: '600' }, color: '#1e293b' }
+                                labels: { boxWidth: 14, padding: 15, font: { size: 12, weight: '600' }, color: legendColor }
                             },
                             tooltip: {
                                 callbacks: {
@@ -968,7 +1639,7 @@
                 });
             }
             else if (chartType === 'bar') {
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-column" style="color: #f59e0b;"></i> Total KM Driven by Car Model (Enterprise Analytics)';
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-column" style="color: var(--warning);"></i> Total KM Driven by Car Model (Enterprise Analytics)';
                 let carKm = {};
                 data.forEach(row => {
                     let car = normCar(row['Car Model']) || 'UNKNOWN';
@@ -980,21 +1651,21 @@
                     type: 'bar',
                     data: {
                         labels: Object.keys(carKm),
-                        datasets: [{ label: 'Total KM', data: Object.values(carKm), backgroundColor: '#2563eb', borderRadius: 8 }]
+                        datasets: [{ label: 'Total KM', data: Object.values(carKm), backgroundColor: '#0a84ff', borderRadius: 8 }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { grid: { display: false } },
-                            y: { ticks: { callback: function(value) { return value.toLocaleString() + ' KM'; } } }
+                            x: { grid: { display: false }, ticks: { color: legendColor } },
+                            y: { ticks: { color: legendColor, callback: function(value) { return value.toLocaleString() + ' KM'; } } }
                         }
                     }
                 });
             }
             else if (chartType === 'line') {
-                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-line" style="color: #06b6d4;"></i> Fleet KM Trend Over Dates (Enterprise Analytics)';
+                document.getElementById('chartTitle').innerHTML = '<i class="fa-solid fa-chart-line" style="color: var(--cyan);"></i> Fleet KM Trend Over Dates (Enterprise Analytics)';
                 let dateKm = {};
                 data.forEach(row => {
                     let d = (row['Date'] || '').trim();
@@ -1009,15 +1680,15 @@
                     type: 'line',
                     data: {
                         labels: sortedDates,
-                        datasets: [{ label: 'KM Driven', data: sortedKmValues, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', borderWidth: 3, fill: true, tension: 0.4 }]
+                        datasets: [{ label: 'KM Driven', data: sortedKmValues, borderColor: '#0a84ff', backgroundColor: 'rgba(10, 132, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4 }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { grid: { display: false } },
-                            y: { ticks: { callback: function(value) { return value.toLocaleString() + ' KM'; } } }
+                            x: { grid: { display: false }, ticks: { color: legendColor } },
+                            y: { ticks: { color: legendColor, callback: function(value) { return value.toLocaleString() + ' KM'; } } }
                         }
                     }
                 });
@@ -1058,15 +1729,15 @@
             let tbody = document.getElementById('driverTableBody');
             tbody.innerHTML = rows.length ? rows.map(r => `
                 <tr>
-                    <td><b>${r.driver}</b></td>
-                    <td>${r.trips}</td>
-                    <td><b style="color: #2563eb;">${r.km.toLocaleString()} KM</b></td>
-                    <td>${r.avg.toFixed(1)} KM</td>
-                    <td>${r.cars}</td>
-                    <td>${r.first}</td>
-                    <td>${r.last}</td>
+                    <td data-label="Driver Name"><b>${r.driver}</b></td>
+                    <td data-label="Total Trips">${r.trips}</td>
+                    <td data-label="Total KM"><b style="color: var(--accent);">${r.km.toLocaleString()} KM</b></td>
+                    <td data-label="Avg KM / Trip">${r.avg.toFixed(1)} KM</td>
+                    <td data-label="Cars Driven">${r.cars}</td>
+                    <td data-label="First Trip">${r.first}</td>
+                    <td data-label="Last Trip">${r.last}</td>
                 </tr>
-            `).join('') : '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:30px;">No data available</td></tr>';
+            `).join('') : '<tr><td colspan="7" style="text-align:center; color:var(--text-tertiary); padding:30px;">No data available</td></tr>';
 
             document.getElementById('driverRecordCount').innerText = `Showing ${rows.length} drivers`;
         }
@@ -1107,15 +1778,15 @@
             let tbody = document.getElementById('carTableBody');
             tbody.innerHTML = rows.length ? rows.map(r => `
                 <tr>
-                    <td><span style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 600;">${r.car}</span></td>
-                    <td>${r.trips}</td>
-                    <td><b style="color: #2563eb;">${r.km.toLocaleString()} KM</b></td>
-                    <td>${r.avg.toFixed(1)} KM</td>
-                    <td>${r.drivers}</td>
-                    <td>${r.lastUsed}</td>
-                    <td>${r.lastDriver}</td>
+                    <td data-label="Car Model"><span style="background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-weight: 600;">${r.car}</span></td>
+                    <td data-label="Total Trips">${r.trips}</td>
+                    <td data-label="Total KM Driven"><b style="color: var(--accent);">${r.km.toLocaleString()} KM</b></td>
+                    <td data-label="Avg KM / Trip">${r.avg.toFixed(1)} KM</td>
+                    <td data-label="Drivers Used By">${r.drivers}</td>
+                    <td data-label="Last Used">${r.lastUsed}</td>
+                    <td data-label="Last Driven By">${r.lastDriver}</td>
                 </tr>
-            `).join('') : '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:30px;">No data available</td></tr>';
+            `).join('') : '<tr><td colspan="7" style="text-align:center; color:var(--text-tertiary); padding:30px;">No data available</td></tr>';
 
             document.getElementById('carRecordCount').innerText = `Showing ${rows.length} cars`;
         }
@@ -1159,6 +1830,7 @@
             let kmValues = sortedKeys.map(k => buckets[k].km);
             let tripValues = sortedKeys.map(k => buckets[k].trips);
 
+            let legendColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#1e293b';
             let ctx = document.getElementById('trendsChart').getContext('2d');
             if (trendsChartInstance) trendsChartInstance.destroy();
 
@@ -1166,18 +1838,18 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { type: 'bar', label: 'Total KM', data: kmValues, backgroundColor: '#2563eb', borderRadius: 6, yAxisID: 'y' },
-                        { type: 'line', label: 'Total Trips', data: tripValues, borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 3, tension: 0.4, yAxisID: 'y1' }
+                        { type: 'bar', label: 'Total KM', data: kmValues, backgroundColor: '#0a84ff', borderRadius: 6, yAxisID: 'y' },
+                        { type: 'line', label: 'Total Trips', data: tripValues, borderColor: '#ff9f0a', backgroundColor: '#ff9f0a', borderWidth: 3, tension: 0.4, yAxisID: 'y1' }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
+                    plugins: { legend: { position: 'top', labels: { color: legendColor } } },
                     scales: {
-                        x: { grid: { display: false } },
-                        y: { position: 'left', ticks: { callback: value => value.toLocaleString() + ' KM' }, title: { display: true, text: 'Total KM' } },
-                        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { precision: 0 }, title: { display: true, text: 'Trips' } }
+                        x: { grid: { display: false }, ticks: { color: legendColor } },
+                        y: { position: 'left', ticks: { color: legendColor, callback: value => value.toLocaleString() + ' KM' }, title: { display: true, text: 'Total KM', color: legendColor } },
+                        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: legendColor, precision: 0 }, title: { display: true, text: 'Trips', color: legendColor } }
                     }
                 }
             });
