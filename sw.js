@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tours-portal-v9'; // Jab bhi bada update karein, isko v9, v10 kar dena (v9 = Sheet columns migration + video/photo mime-type fix)
+const CACHE_NAME = 'tours-portal-v10'; // Jab bhi bada update karein, isko v10, v11 kar dena (v10 = Total KM 0 bug fix)
 const ASSETS = [
   './',
   'index.html'
