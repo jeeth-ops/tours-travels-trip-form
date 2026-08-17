@@ -976,6 +976,15 @@
             document.getElementById('totalKm').value = total;
         }
 
+        // Camera app se wapas app par aane par (ya page bfcache se restore hone par)
+        // Total KM ko turant dobara calculate kar do, taaki galti se "0" na dikhe
+        window.addEventListener('pageshow', function() {
+            calculateKM();
+        });
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) calculateKM();
+        });
+
         function setOdometerFile(type, input) {
             if (input.files && input.files[0]) {
                 const targetInput = document.getElementById(type + 'Image');
@@ -986,6 +995,7 @@
                 document.getElementById(type + 'FileLabel').innerText = input.files[0].name;
                 document.getElementById(type + 'ActionBtns').style.display = 'none';
                 document.getElementById(type + 'PreviewBox').style.display = 'flex';
+                calculateKM(); // Safety: file select hote hi Total KM bhi refresh kar do
             }
         }
 
