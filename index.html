@@ -604,6 +604,73 @@
                     <input type="file" id="endGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('end', this)">
                     <input type="file" id="endImage" required style="display: none;">
                 </div>
+
+                <!-- Car Photo Section -->
+                <div class="form-group">
+                    <label>Photo of Car *</label>
+                    <div id="carPhotoActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
+                        <button type="button" onclick="document.getElementById('carPhotoCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-camera"></i> Open Camera
+                        </button>
+                        <button type="button" onclick="document.getElementById('carPhotoGalInput').click()" style="flex: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-image"></i> Choose Gallery
+                        </button>
+                    </div>
+                    <div id="carPhotoPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: rgba(var(--accent-2-rgb),0.1); border: 1px solid var(--accent-2); padding: 9px 12px; border-radius: 10px; margin-bottom: 4px;">
+                        <span id="carPhotoFileLabel" style="font-size: 12px; color: var(--accent-2); font-weight: 600; word-break: break-all; max-width: 65%;">No photo captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('carPhoto')" style="background: var(--danger); color: white; border: none; padding: 7px 10px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-trash"></i> Delete / Retake
+                        </button>
+                    </div>
+                    <input type="file" id="carPhotoCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('carPhoto', this)">
+                    <input type="file" id="carPhotoGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('carPhoto', this)">
+                    <input type="file" id="carPhotoImage" required style="display: none;">
+                </div>
+
+                <!-- Car Video Section -->
+                <div class="form-group">
+                    <label>Video of Car *</label>
+                    <div id="carVideoActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
+                        <button type="button" onclick="document.getElementById('carVideoCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-video"></i> Open Camera
+                        </button>
+                        <button type="button" onclick="document.getElementById('carVideoGalInput').click()" style="flex: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-image"></i> Choose Gallery
+                        </button>
+                    </div>
+                    <div id="carVideoPreviewBox" style="display: none; align-items: center; justify-content: space-between; background: rgba(var(--accent-2-rgb),0.1); border: 1px solid var(--accent-2); padding: 9px 12px; border-radius: 10px; margin-bottom: 4px;">
+                        <span id="carVideoFileLabel" style="font-size: 12px; color: var(--accent-2); font-weight: 600; word-break: break-all; max-width: 65%;">No video captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('carVideo')" style="background: var(--danger); color: white; border: none; padding: 7px 10px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-trash"></i> Delete / Retake
+                        </button>
+                    </div>
+                    <input type="file" id="carVideoCamInput" accept="video/*" capture="environment" style="display: none;" onchange="setOdometerFile('carVideo', this)">
+                    <input type="file" id="carVideoGalInput" accept="video/*" style="display: none;" onchange="setOdometerFile('carVideo', this)">
+                    <input type="file" id="carVideoImage" required style="display: none;">
+                    <span style="font-size: 11px; color: var(--text-tertiary); display: block; margin-top: 2px;">Tip: Short clip rakhein (10-15 sec), lambi video upload slow ho sakti hai.</span>
+                </div>
+
+                <!-- Driver Selfie Section -->
+                <div class="form-group">
+                    <label>Selfie of Driver *</label>
+                    <div id="driverSelfieActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
+                        <button type="button" onclick="document.getElementById('driverSelfieCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-camera"></i> Open Camera
+                        </button>
+                        <button type="button" onclick="document.getElementById('driverSelfieGalInput').click()" style="flex: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-image"></i> Choose Gallery
+                        </button>
+                    </div>
+                    <div id="driverSelfiePreviewBox" style="display: none; align-items: center; justify-content: space-between; background: rgba(var(--accent-2-rgb),0.1); border: 1px solid var(--accent-2); padding: 9px 12px; border-radius: 10px; margin-bottom: 4px;">
+                        <span id="driverSelfieFileLabel" style="font-size: 12px; color: var(--accent-2); font-weight: 600; word-break: break-all; max-width: 65%;">No selfie captured yet</span>
+                        <button type="button" onclick="removeOdometerFile('driverSelfie')" style="background: var(--danger); color: white; border: none; padding: 7px 10px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-trash"></i> Delete / Retake
+                        </button>
+                    </div>
+                    <input type="file" id="driverSelfieCamInput" accept="image/*" capture="user" style="display: none;" onchange="setOdometerFile('driverSelfie', this)">
+                    <input type="file" id="driverSelfieGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('driverSelfie', this)">
+                    <input type="file" id="driverSelfieImage" required style="display: none;">
+                </div>
             </div>
 
             <!-- Submit Button Section -->
@@ -736,6 +803,9 @@
                             <th class="sortable" onclick="sortTable('Assigned By')">Assigned By <i class="fa-solid fa-sort sort-icon" id="sortIcon-Assigned By"></i></th>
                             <th>Start Odometer</th>
                             <th>End Odometer</th>
+                            <th>Car Photo</th>
+                            <th>Car Video</th>
+                            <th>Driver Selfie</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -952,55 +1022,85 @@
 
             const fileStart = document.getElementById('startImage').files[0];
             const fileEnd = document.getElementById('endImage').files[0];
+            const fileCarPhoto = document.getElementById('carPhotoImage').files[0];
+            const fileCarVideo = document.getElementById('carVideoImage').files[0];
+            const fileDriverSelfie = document.getElementById('driverSelfieImage').files[0];
 
-            toBase64(fileStart, startBase64 => {
-                toBase64(fileEnd, endBase64 => {
-                    const formData = {
-                        driverName: document.getElementById('driverName').value,
-                        tripDate: document.getElementById('tripDate').value,
-                        carModel: document.getElementById('carModel').value,
-                        assignedBy: document.getElementById('assignedBy').value,
-                        startDest: document.getElementById('startDest').value,
-                        endDest: document.getElementById('endDest').value,
-                        startKm: startKm,
-                        endKm: endKm,
-                        totalKm: document.getElementById('totalKm').value,
-                        startImage: startBase64,
-                        startImageName: fileStart.name,
-                        endImage: endBase64,
-                        endImageName: fileEnd.name
-                    };
+            Promise.all([
+                toBase64(fileStart),
+                toBase64(fileEnd),
+                toBase64(fileCarPhoto),
+                toBase64(fileCarVideo),
+                toBase64(fileDriverSelfie)
+            ]).then(([startBase64, endBase64, carPhotoBase64, carVideoBase64, driverSelfieBase64]) => {
+                const formData = {
+                    driverName: document.getElementById('driverName').value,
+                    tripDate: document.getElementById('tripDate').value,
+                    carModel: document.getElementById('carModel').value,
+                    assignedBy: document.getElementById('assignedBy').value,
+                    startDest: document.getElementById('startDest').value,
+                    endDest: document.getElementById('endDest').value,
+                    startKm: startKm,
+                    endKm: endKm,
+                    totalKm: document.getElementById('totalKm').value,
+                    startImage: startBase64,
+                    startImageName: fileStart.name,
+                    startImageType: fileStart.type,
+                    endImage: endBase64,
+                    endImageName: fileEnd.name,
+                    endImageType: fileEnd.type,
+                    carPhoto: carPhotoBase64,
+                    carPhotoName: fileCarPhoto.name,
+                    carPhotoType: fileCarPhoto.type,
+                    carVideo: carVideoBase64,
+                    carVideoName: fileCarVideo.name,
+                    carVideoType: fileCarVideo.type,
+                    driverSelfie: driverSelfieBase64,
+                    driverSelfieName: fileDriverSelfie.name,
+                    driverSelfieType: fileDriverSelfie.type
+                };
 
-                    fetch(scriptURL, {
-                        method: 'POST',
-                        body: JSON.stringify(formData)
-                    })
-                    .then(res => res.json())
-                    .then(response => {
-                        showToast("Trip Details Submitted Successfully! ✅", "success");
-                        document.getElementById('tripForm').reset();
-                        document.getElementById('tripDate').valueAsDate = new Date();
-                        document.getElementById('totalKm').value = "0";
-                        removeOdometerFile('start');
-                        removeOdometerFile('end');
-                        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
-                        btn.disabled = false;
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        showToast("Error submitting form. Try again!", "error");
-                        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
-                        btn.disabled = false;
-                    });
+                fetch(scriptURL, {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                })
+                .then(res => res.json())
+                .then(response => {
+                    showToast("Trip Details Submitted Successfully! ✅", "success");
+                    document.getElementById('tripForm').reset();
+                    document.getElementById('tripDate').valueAsDate = new Date();
+                    document.getElementById('totalKm').value = "0";
+                    removeOdometerFile('start');
+                    removeOdometerFile('end');
+                    removeOdometerFile('carPhoto');
+                    removeOdometerFile('carVideo');
+                    removeOdometerFile('driverSelfie');
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
+                    btn.disabled = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("Error submitting form. Try again!", "error");
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
+                    btn.disabled = false;
                 });
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("Error reading files. Try again!", "error");
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
+                btn.disabled = false;
             });
         }
 
-        function toBase64(file, callback) {
-            let reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => callback(reader.result.split(',')[1]);
-            reader.onerror = error => console.log("Error: ", error);
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) { resolve(''); return; }
+                let reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
         }
 
         function openLoginModal() {
@@ -1325,6 +1425,9 @@
                     <td>${row['Assigned By'] || ''}</td>
                     <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
                     <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                    <td>${row['Car Photo Link'] ? `<a href="${row['Car Photo Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                    <td>${row['Car Video Link'] ? `<a href="${row['Car Video Link']}" target="_blank" class="photo-link">Watch</a>` : 'No Video'}</td>
+                    <td>${row['Driver Selfie Link'] ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
                 `;
                 tbody.appendChild(tr);
 
@@ -1458,6 +1561,15 @@
             photosHtml += row['End Image Link']
                 ? `<a href="${row['End Image Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-camera"></i>End Odometer</a>`
                 : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-camera"></i>No End Photo</div>`;
+            photosHtml += row['Car Photo Link']
+                ? `<a href="${row['Car Photo Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-car"></i>Car Photo</a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-car"></i>No Car Photo</div>`;
+            photosHtml += row['Car Video Link']
+                ? `<a href="${row['Car Video Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-video"></i>Car Video</a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-video"></i>No Car Video</div>`;
+            photosHtml += row['Driver Selfie Link']
+                ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-user"></i>Driver Selfie</a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-user"></i>No Selfie</div>`;
             document.getElementById('sheetPhotos').innerHTML = photosHtml;
 
             let overlay = document.getElementById('bottomSheetOverlay');
