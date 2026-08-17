@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tours-portal-v11'; // Jab bhi bada update karein, isko v11, v12 kar dena (v11 = camera se wapas aane par Total KM auto-refresh)
+const CACHE_NAME = 'tours-portal-v12'; // Jab bhi bada update karein, isko v12, v13 kar dena (v12 = naya car MH46 DC 8729 add hua)
 const ASSETS = [
   './',
   'index.html'
