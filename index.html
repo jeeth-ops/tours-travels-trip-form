@@ -1016,6 +1016,10 @@
                 return;
             }
 
+            // Total KM ko yahin dobara calculate kar lo (safety net agar oninput event miss ho gaya ho)
+            let totalKmVal = endKm >= startKm ? endKm - startKm : 0;
+            document.getElementById('totalKm').value = totalKmVal;
+
             let btn = document.getElementById('submitBtn');
             btn.innerText = "Submitting Data & Uploading Photos... ⏳";
             btn.disabled = true;
@@ -1042,7 +1046,7 @@
                     endDest: document.getElementById('endDest').value,
                     startKm: startKm,
                     endKm: endKm,
-                    totalKm: document.getElementById('totalKm').value,
+                    totalKm: totalKmVal,
                     startImage: startBase64,
                     startImageName: fileStart.name,
                     startImageType: fileStart.type,
