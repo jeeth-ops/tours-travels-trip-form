@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tours-portal-v10'; // Jab bhi bada update karein, isko v10, v11 kar dena (v10 = Total KM 0 bug fix)
+const CACHE_NAME = 'tours-portal-v11'; // Jab bhi bada update karein, isko v11, v12 kar dena (v11 = camera se wapas aane par Total KM auto-refresh)
 const ASSETS = [
   './',
   'index.html'
