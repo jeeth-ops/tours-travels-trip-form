@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tours-portal-v8'; // Jab bhi bada update karein, isko v8, v9 kar dena (v8 = Car Photo/Video + Driver Selfie fields)
+const CACHE_NAME = 'tours-portal-v9'; // Jab bhi bada update karein, isko v9, v10 kar dena (v9 = Sheet columns migration + video/photo mime-type fix)
 const ASSETS = [
   './',
   'index.html'
