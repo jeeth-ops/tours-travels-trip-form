@@ -1,14 +1,30 @@
-const CACHE_NAME = 'tours-portal-v13'; // Jab bhi bada update karein, isko v12, v13 kar dena (v13 = 3 naye car add hue: Bolero Neo Silver, Bolero Neo Green, Ertiga MH05 FP 2569)
-const ASSETS = [
+// Jab bhi bada update karein, VERSION ko badha dena (v14, v15...) - purana cache automatic saaf ho jaayega.
+// v14 = smarter caching: ab CDN libraries (Chart.js, jsPDF, FontAwesome) aur icons bhi cache hote hain,
+// isliye app dobara kholne par almost turant khulti hai, offline par bhi kaam karti hai.
+const VERSION = 'v14';
+const SHELL_CACHE = 'tours-portal-shell-' + VERSION;
+const RUNTIME_CACHE = 'tours-portal-runtime'; // CDN libraries - version badhne par bhi yeh cache bana rehta hai
+
+// App shell: pehli install par turant cache ho jaata hai
+const SHELL_ASSETS = [
   './',
-  'index.html'
+  'index.html',
+  'manifest.json',
+  '192-192.png',
+  '512-512.png'
 ];
+
+// Live data / submissions is host se aate hain - inhe KABHI cache nahi karna (hamesha fresh data chahiye)
+const NEVER_CACHE_HOST = 'script.google.com';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting(); // Naye service worker ko bina wait kiye turant activate karega
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+    caches.open(SHELL_CACHE).then((cache) => {
+      // addAll ek bhi asset fail hone par pura reject kar deta hai, isliye har file individually try karte hain
+      return Promise.all(
+        SHELL_ASSETS.map((url) => cache.add(url).catch(() => {}))
+      );
     })
   );
 });
@@ -18,8 +34,9 @@ self.addEventListener('activate', (e) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key); // Purane sabhi old caches ko automatic saaf kar dega
+          // Purane shell caches hata do, lekin RUNTIME_CACHE (CDN libs) ko chhed mat karo
+          if (key !== SHELL_CACHE && key !== RUNTIME_CACHE) {
+            return caches.delete(key);
           }
         })
       );
@@ -27,10 +44,35 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// Stale-while-revalidate: cache mein jo hai woh TURANT dikha do (fast!),
+// saath hi background mein network se latest version fetch karke cache update kar do (agli baar ke liye)
+function staleWhileRevalidate(request, cacheName) {
+  return caches.open(cacheName).then((cache) => {
+    return cache.match(request).then((cachedResponse) => {
+      const networkFetch = fetch(request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+      }).catch(() => cachedResponse); // network fail ho to purana cache hi sahi
+
+      return cachedResponse || networkFetch;
+    });
+  });
+}
+
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
-  );
+  const req = e.request;
+  const url = new URL(req.url);
+
+  // POST/PUT waghera (form submit) ko Service Worker touch hi nahi karega - seedha network par jaayega
+  if (req.method !== 'GET') return;
+
+  // Live trip data (fetch/submit) hamesha fresh honi chahiye - kabhi cache se serve nahi karte
+  if (url.hostname === NEVER_CACHE_HOST) return;
+
+  const isSameOrigin = url.origin === self.location.origin;
+  const cacheName = isSameOrigin ? SHELL_CACHE : RUNTIME_CACHE;
+
+  e.respondWith(staleWhileRevalidate(req, cacheName));
 });
