@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tours-portal-v12'; // Jab bhi bada update karein, isko v12, v13 kar dena (v12 = naya car MH46 DC 8729 add hua)
+const CACHE_NAME = 'tours-portal-v13'; // Jab bhi bada update karein, isko v12, v13 kar dena (v13 = 3 naye car add hue: Bolero Neo Silver, Bolero Neo Green, Ertiga MH05 FP 2569)
 const ASSETS = [
   './',
   'index.html'
