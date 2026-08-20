@@ -405,16 +405,31 @@
         .sheet-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
         .sheet-row span:first-child { color: var(--text-secondary); font-weight: 600; }
         .sheet-row span:last-child { font-weight: 700; }
-        .sheet-photos { display: flex; gap: 12px; margin-top: 18px; }
+        .sheet-photos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 18px; }
         .sheet-photo-btn {
-            flex: 1; text-align: center; padding: 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border-strong);
-            color: var(--text); text-decoration: none; font-weight: 700; font-size: 13px; display: flex; flex-direction: column; gap: 8px; align-items: center;
+            text-align: center; padding: 12px 4px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border-strong);
+            color: var(--text); text-decoration: none; font-weight: 700; font-size: 10.5px; line-height: 1.25; letter-spacing: -0.1px;
+            display: flex; flex-direction: column; gap: 7px; align-items: center; justify-content: flex-start; min-height: 84px;
+            transition: transform 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
         }
-        .sheet-photo-btn i { font-size: 20px; color: var(--accent); }
+        .sheet-photo-btn .icon-wrap {
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: rgba(var(--accent-rgb),0.12); transition: background 0.15s var(--ease), transform 0.15s var(--spring);
+        }
+        .sheet-photo-btn i { font-size: 14px; color: var(--accent); }
+        .sheet-photo-btn:active { transform: scale(0.93); background: rgba(var(--accent-rgb),0.08); border-color: var(--accent); }
+        .sheet-photo-btn:active .icon-wrap { transform: scale(0.9); background: rgba(var(--accent-rgb),0.22); }
+        .sheet-photo-btn:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(var(--accent-rgb),0.12); }
+        .sheet-photo-btn[style*="opacity"] { box-shadow: none; }
+        .sheet-photo-btn[style*="opacity"] .icon-wrap { background: rgba(var(--text-tertiary-rgb, 142,142,147),0.12); }
+        .sheet-photo-btn[style*="opacity"] i { color: var(--text-tertiary); }
         .sheet-close-btn {
             width: 100%; margin-top: 18px; padding: 14px; border: none; border-radius: 14px; background: var(--surface-2);
             color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer;
+            transition: transform 0.15s var(--ease), background 0.15s var(--ease);
         }
+        .sheet-close-btn:active { transform: scale(0.97); background: var(--border); }
 
         /* ============ BOTTOM NAV (mobile) ============ */
         #bottomNav { display: none; }
@@ -1636,26 +1651,26 @@
             document.getElementById('sheetTitle').innerText = row['Driver Name'] || 'Trip Details';
             document.getElementById('sheetSub').innerText = `${row['Date'] || ''} • ${normCar(row['Car Model'])}`;
             document.getElementById('sheetRows').innerHTML = `
-                <div class="sheet-row"><span>Route</span><span>${row['Start From'] || '—'} → ${row['End To'] || '—'}</span></div>
-                <div class="sheet-row"><span>Total KM</span><span>${km.toLocaleString()} KM</span></div>
+                <div class="sheet-row"><span>Route</span><span>${row['Start From'] || '—'} <i class="fa-solid fa-arrow-right" style="font-size:10px; color: var(--text-tertiary); margin: 0 2px;"></i> ${row['End To'] || '—'}</span></div>
+                <div class="sheet-row"><span>Total KM</span><span style="color: var(--accent);">${km.toLocaleString()} KM</span></div>
                 <div class="sheet-row"><span>Assigned By</span><span>${row['Assigned By'] || '—'}</span></div>
             `;
             let photosHtml = '';
             photosHtml += row['Start Image Link']
-                ? `<a href="${row['Start Image Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-camera"></i>Start Odometer</a>`
-                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-camera"></i>No Start Photo</div>`;
+                ? `<a href="${row['Start Image Link']}" target="_blank" class="sheet-photo-btn"><span class="icon-wrap"><i class="fa-solid fa-camera"></i></span><span>Start<br>Odometer</span></a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><span class="icon-wrap"><i class="fa-solid fa-camera"></i></span><span>No Start<br>Photo</span></div>`;
             photosHtml += row['End Image Link']
-                ? `<a href="${row['End Image Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-camera"></i>End Odometer</a>`
-                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-camera"></i>No End Photo</div>`;
+                ? `<a href="${row['End Image Link']}" target="_blank" class="sheet-photo-btn"><span class="icon-wrap"><i class="fa-solid fa-camera"></i></span><span>End<br>Odometer</span></a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><span class="icon-wrap"><i class="fa-solid fa-camera"></i></span><span>No End<br>Photo</span></div>`;
             photosHtml += row['Car Photo Link']
-                ? `<a href="${row['Car Photo Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-car"></i>Car Photo</a>`
-                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-car"></i>No Car Photo</div>`;
+                ? `<a href="${row['Car Photo Link']}" target="_blank" class="sheet-photo-btn"><span class="icon-wrap"><i class="fa-solid fa-car"></i></span><span>Car<br>Photo</span></a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><span class="icon-wrap"><i class="fa-solid fa-car"></i></span><span>No Car<br>Photo</span></div>`;
             photosHtml += row['Car Video Link']
-                ? `<a href="${row['Car Video Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-video"></i>Car Video</a>`
-                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-video"></i>No Car Video</div>`;
+                ? `<a href="${row['Car Video Link']}" target="_blank" class="sheet-photo-btn"><span class="icon-wrap"><i class="fa-solid fa-video"></i></span><span>Car<br>Video</span></a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><span class="icon-wrap"><i class="fa-solid fa-video"></i></span><span>No Car<br>Video</span></div>`;
             photosHtml += row['Driver Selfie Link']
-                ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="sheet-photo-btn"><i class="fa-solid fa-user"></i>Driver Selfie</a>`
-                : `<div class="sheet-photo-btn" style="opacity:0.5;"><i class="fa-solid fa-user"></i>No Selfie</div>`;
+                ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="sheet-photo-btn"><span class="icon-wrap"><i class="fa-solid fa-user"></i></span><span>Driver<br>Selfie</span></a>`
+                : `<div class="sheet-photo-btn" style="opacity:0.5;"><span class="icon-wrap"><i class="fa-solid fa-user"></i></span><span>No<br>Selfie</span></div>`;
             document.getElementById('sheetPhotos').innerHTML = photosHtml;
 
             let overlay = document.getElementById('bottomSheetOverlay');
