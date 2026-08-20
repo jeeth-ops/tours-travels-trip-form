@@ -357,6 +357,15 @@
             opacity: 0; animation: tripCardIn 0.6s var(--spring) both;
         }
         .trip-card-wrap-noanim { animation: none; opacity: 1; }
+        .load-more-btn {
+            width: 100%; margin-top: 4px; margin-bottom: 12px; padding: 14px; border-radius: 14px;
+            background: var(--surface-2); border: 1px dashed var(--border-strong); color: var(--accent);
+            font-weight: 700; font-size: 13.5px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 8px; transition: transform 0.15s var(--ease), background 0.15s var(--ease);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .load-more-btn .load-more-count { color: var(--text-tertiary); font-weight: 600; }
+        .load-more-btn:active { transform: scale(0.98); background: rgba(var(--accent-rgb),0.1); }
         .trip-card-actions {
             position: absolute; top: 0; right: 0; bottom: 0; width: 150px; display: flex;
             background: var(--accent); border-radius: var(--radius-md);
@@ -1032,8 +1041,13 @@
             document.getElementById(type + 'PreviewBox').style.display = 'none';
         }
 
+        // UX FIX: agar button disable hone se pehle hi dobara submit fire ho jaaye (double-tap ya
+        // Enter key), yeh flag ek extra safety net hai taaki trip kabhi 2 baar submit na ho.
+        let isSubmittingTrip = false;
+
         function submitForm(e) {
             e.preventDefault();
+            if (isSubmittingTrip) return;
 
             // Safety net: agar blur trigger nahi hua (e.g. autofill), tab bhi format sahi ho
             applyTitleCase('driverName');
@@ -1053,15 +1067,23 @@
             let totalKmVal = endKm >= startKm ? endKm - startKm : 0;
             document.getElementById('totalKm').value = totalKmVal;
 
-            let btn = document.getElementById('submitBtn');
-            btn.innerText = "Submitting Data & Uploading Photos... ⏳";
-            btn.disabled = true;
-
             const fileStart = document.getElementById('startImage').files[0];
             const fileEnd = document.getElementById('endImage').files[0];
             const fileCarPhoto = document.getElementById('carPhotoImage').files[0];
             const fileCarVideo = document.getElementById('carVideoImage').files[0];
             const fileDriverSelfie = document.getElementById('driverSelfieImage').files[0];
+
+            // PERF: bada video (jaise 45+ second clip) upload bahut slow/unreliable ho sakta hai,
+            // khaaskar weak network par. Compress nahi kar sakte client-side, isliye pehle hi warn
+            // kar dete hain taaki driver chhota, sharp video le - upload fail hone se behtar hai.
+            if (fileCarVideo && fileCarVideo.size > 20 * 1024 * 1024) {
+                showToast("Video is quite large (" + (fileCarVideo.size / (1024*1024)).toFixed(1) + "MB) - upload may be slow. Consider a shorter clip.", "error");
+            }
+
+            let btn = document.getElementById('submitBtn');
+            isSubmittingTrip = true;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Compressing photos...';
 
             Promise.all([
                 compressImageForUpload(fileStart),
@@ -1070,6 +1092,11 @@
                 toBase64(fileCarVideo),
                 compressImageForUpload(fileDriverSelfie)
             ]).then(([startRes, endRes, carPhotoRes, carVideoBase64, driverSelfieRes]) => {
+                // UX: photos ready ho chuki, ab actual network upload shuru ho raha hai - button
+                // text update karo taaki driver ko pata chale wo alag stage me hai (specially bada
+                // video ho to yeh step time le sakta hai)
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server...';
+
                 const formData = {
                     driverName: document.getElementById('driverName').value,
                     tripDate: document.getElementById('tripDate').value,
@@ -1114,12 +1141,14 @@
                     removeOdometerFile('driverSelfie');
                     btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
                     btn.disabled = false;
+                    isSubmittingTrip = false;
                 })
                 .catch(err => {
                     console.error(err);
                     showToast("Error submitting form. Try again!", "error");
                     btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
                     btn.disabled = false;
+                    isSubmittingTrip = false;
                 });
             })
             .catch(err => {
@@ -1127,6 +1156,7 @@
                 showToast("Error reading files. Try again!", "error");
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Details';
                 btn.disabled = false;
+                isSubmittingTrip = false;
             });
         }
 
@@ -1479,35 +1509,90 @@
             requestAnimationFrame(tick);
         }
 
+        // PERF: mobile card list ko ek saath poora render karne ki bajaye batches me render karte
+        // hain. Abhi 150 pe theek hai, lekin agar entries 500-1000 tak badh jaayein, poora ek saath
+        // render karna phone ko hamesha ke liye slow kar dega. "Load More" se sirf jitna dikhna hai
+        // utna hi kaam hota hai - list jitni badi bhi ho jaaye, shuruaati load hamesha fast rahega.
+        const CARD_PAGE_SIZE = 30;
+        window.cardPagination = null;
+
+        function buildCardHtml(row, idx, animate) {
+            let km = parseFloat(row['Total KM'] || 0);
+            let animStyle = animate ? `style="animation-delay:${idx * 30}ms;"` : `style="opacity:1;"`;
+            let animClass = animate ? 'trip-card-wrap' : 'trip-card-wrap trip-card-wrap-noanim';
+            return `
+                <div class="${animClass}" ${animStyle}>
+                    <div class="trip-card-actions">
+                        <button onclick="openSheet(${idx})"><i class="fa-solid fa-image"></i>Photos</button>
+                    </div>
+                    <div class="trip-card" data-idx="${idx}">
+                        <div class="trip-card-top">
+                            <div>
+                                <div class="trip-card-driver">${row['Driver Name'] || 'Unknown'}</div>
+                                <div class="trip-card-date">${row['Date'] || ''}</div>
+                            </div>
+                            <div class="trip-card-km">${km.toLocaleString()} KM</div>
+                        </div>
+                        <div class="trip-card-route"><i class="fa-solid fa-location-dot" style="color: var(--accent-2);"></i> <b>${row['Start From'] || '—'}</b> <i class="fa-solid fa-arrow-right" style="color: var(--text-tertiary); font-size:10px;"></i> <b>${row['End To'] || '—'}</b></div>
+                        <div class="trip-card-meta">
+                            <span class="trip-card-car-tag">${normCar(row['Car Model'])}</span>
+                            <span class="trip-card-hint"><i class="fa-solid fa-chevron-left"></i> swipe for photos</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMoreCards() {
+            let state = window.cardPagination;
+            if (!state) return;
+            let cardsList = document.getElementById('tripCardsList');
+            let start = state.renderedCount;
+            let end = Math.min(start + CARD_PAGE_SIZE, state.data.length);
+
+            let existingBtn = document.getElementById('loadMoreCardsBtn');
+            if (existingBtn) existingBtn.remove();
+
+            let batchHtml = [];
+            for (let idx = start; idx < end; idx++) {
+                batchHtml.push(buildCardHtml(state.data[idx], idx, true));
+            }
+            cardsList.insertAdjacentHTML('beforeend', batchHtml.join(''));
+            state.renderedCount = end;
+
+            if (state.renderedCount < state.data.length) {
+                let remaining = state.data.length - state.renderedCount;
+                cardsList.insertAdjacentHTML('beforeend',
+                    `<button id="loadMoreCardsBtn" class="load-more-btn" onclick="renderMoreCards()">
+                        Load ${Math.min(CARD_PAGE_SIZE, remaining)} more trips <span class="load-more-count">(${remaining} left)</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>`
+                );
+            }
+        }
+
         function renderDashboard(data) {
             let totalTrips = data.length;
-            let sumKm = 0;
+            let sumKm = data.reduce((acc, row) => acc + (parseFloat(row['Total KM']) || 0), 0);
 
             // PERF FIX: desktop table (<table>) is completely hidden on mobile (display:none, see
-            // @media max-width:760px). Building 150 <tr> rows there was pure wasted work on phones -
-            // it never even painted. Ab hum sirf woh cheez banate hain jo actually screen par dikhti hai.
+            // @media max-width:760px). Building rows there was pure wasted work on phones - it never
+            // even painted. Ab hum sirf woh cheez banate hain jo actually screen par dikhti hai.
             let isMobileView = window.innerWidth <= 760;
 
             let tbody = document.getElementById('tableBody');
             let cardsList = document.getElementById('tripCardsList');
+            tbody.innerHTML = '';
+            cardsList.innerHTML = '';
 
             // PERF FIX: pehle har row ke liye document.createElement + appendChild call hota tha -
-            // 150 entries par 300 alag-alag DOM inserts, har ek apna reflow trigger karta tha (bahut
-            // slow, khaaskar Android par). Ab poora HTML string me jodkar EK hi baar innerHTML set
-            // karte hain - browser ko sirf ek hi reflow/paint karna padta hai.
-            let tableRowsHtml = [];
-            let cardsHtml = [];
-            // Bahut saare cards ek saath "fade+slide in" animate karna (150 elements!) GPU/paint par
-            // bhaari padta hai aur jaam lagata hai. Ab sirf pehle ~18 cards (jo waise bhi pehli screen
-            // par dikhte hain) stagger-animate hote hain; baaki turant, bina animation ke dikhte hain.
-            const ANIMATE_LIMIT = 18;
-
-            data.forEach((row, idx) => {
-                let km = parseFloat(row['Total KM'] || 0);
-                sumKm += km;
-
-                if (!isMobileView) {
-                    tableRowsHtml.push(`
+            // itni saari alag-alag DOM inserts, har ek apna reflow trigger karta tha (bahut slow,
+            // khaaskar Android par). Ab poora HTML string me jodkar EK hi baar innerHTML set karte
+            // hain - browser ko sirf ek hi reflow/paint karna padta hai.
+            if (!isMobileView) {
+                let tableRowsHtml = data.map(row => {
+                    let km = parseFloat(row['Total KM'] || 0);
+                    return `
                         <tr>
                             <td>${row['Timestamp'] ? new Date(row['Timestamp']).toLocaleString() : ''}</td>
                             <td><b>${row['Driver Name'] || ''}</b></td>
@@ -1523,38 +1608,14 @@
                             <td>${row['Car Video Link'] ? `<a href="${row['Car Video Link']}" target="_blank" class="photo-link">Watch</a>` : 'No Video'}</td>
                             <td>${row['Driver Selfie Link'] ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
                         </tr>
-                    `);
-                }
+                    `;
+                }).join('');
+                tbody.innerHTML = tableRowsHtml;
+            }
 
-                // Mobile swipeable card
-                let animate = idx < ANIMATE_LIMIT;
-                let animStyle = animate ? `style="animation-delay:${idx * 45}ms;"` : `style="opacity:1;"`;
-                let animClass = animate ? 'trip-card-wrap' : 'trip-card-wrap trip-card-wrap-noanim';
-                cardsHtml.push(`
-                    <div class="${animClass}" ${animStyle}>
-                        <div class="trip-card-actions">
-                            <button onclick="openSheet(${idx})"><i class="fa-solid fa-image"></i>Photos</button>
-                        </div>
-                        <div class="trip-card" data-idx="${idx}">
-                            <div class="trip-card-top">
-                                <div>
-                                    <div class="trip-card-driver">${row['Driver Name'] || 'Unknown'}</div>
-                                    <div class="trip-card-date">${row['Date'] || ''}</div>
-                                </div>
-                                <div class="trip-card-km">${km.toLocaleString()} KM</div>
-                            </div>
-                            <div class="trip-card-route"><i class="fa-solid fa-location-dot" style="color: var(--accent-2);"></i> <b>${row['Start From'] || '—'}</b> <i class="fa-solid fa-arrow-right" style="color: var(--text-tertiary); font-size:10px;"></i> <b>${row['End To'] || '—'}</b></div>
-                            <div class="trip-card-meta">
-                                <span class="trip-card-car-tag">${normCar(row['Car Model'])}</span>
-                                <span class="trip-card-hint"><i class="fa-solid fa-chevron-left"></i> swipe for photos</span>
-                            </div>
-                        </div>
-                    </div>
-                `);
-            });
-
-            if (!isMobileView) tbody.innerHTML = tableRowsHtml.join('');
-            cardsList.innerHTML = cardsHtml.join('');
+            window.currentRenderedRows = data;
+            window.cardPagination = { data: data, renderedCount: 0 };
+            renderMoreCards();
 
             animateCounter(document.getElementById('totalTrips'), totalTrips, '');
             animateCounter(document.getElementById('totalKmCard'), sumKm, ' KM');
@@ -1563,7 +1624,6 @@
             document.getElementById('loadingText').style.display = 'none';
             document.getElementById('tripTable').style.display = 'table';
 
-            window.currentRenderedRows = data;
             setupSwipeCards();
             setupLazyTableOnResize();
         }
