@@ -36,13 +36,13 @@
       })();
     </script>
 
-    <!-- Chart.js & FontAwesome -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js & jsPDF: defer kiya hai (ye sirf admin login / PDF export ke baad chahiye hote hain),
+         isse driver form pehli baar khulte hi turant paint hota hai, bina in libraries ka wait kiye -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <!-- jsPDF + AutoTable for branded PDF reports -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <style>
         :root {
             --bg: #f2f2f7;
@@ -118,7 +118,7 @@
 
         button, input, select { font-family: inherit; }
         button i, .btn i, .admin-trigger-btn i, .submit-btn i { pointer-events: none; }
-        button { -webkit-appearance: none; }
+        button { -webkit-appearance: none; touch-action: manipulation; }
         button:active { transform: scale(0.96); }
         .btn:active, .admin-trigger-btn:active, .tab-btn:active, .icon-btn:active { transform: scale(0.94); }
 
@@ -185,7 +185,7 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 600; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.3px; }
         .form-group input, .form-group select {
-            width: 100%; padding: 13px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 15px;
+            width: 100%; padding: 13px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 16px;
             outline: none; transition: 0.2s var(--ease); background: var(--surface-2); color: var(--text);
         }
         .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.15); }
@@ -194,9 +194,10 @@
         #loginModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0); display: none; justify-content: center; align-items: center; z-index: 1000;
-            backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px);
-            transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease);
+            transition: background 0.35s var(--ease);
         }
+        /* Blur value ko transition NAHI karte - animating backdrop-filter bahut GPU-costly hai (khaaskar Android par);
+           blur turant apply/remove hota hai, sirf dark overlay fade smooth chalta hai */
         #loginModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(var(--blur-modal)); -webkit-backdrop-filter: blur(var(--blur-modal)); }
         .login-box {
             background: var(--surface-solid); padding: 36px 32px; border-radius: 26px; width: 380px; max-width: 88vw; text-align: center;
@@ -271,7 +272,7 @@
         }
         .search-input, .select-input {
             flex: 1; min-width: 220px; padding: 12px 15px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
-            font-size: 14px; outline: none; background: var(--surface-2); color: var(--text); transition: 0.2s var(--ease);
+            font-size: 16px; outline: none; background: var(--surface-2); color: var(--text); transition: 0.2s var(--ease);
         }
         .search-input:focus, .select-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(var(--accent-rgb),0.15); }
         .record-count { font-size: 13.5px; color: var(--text-secondary); font-weight: 600; margin-left: auto; }
@@ -317,6 +318,7 @@
         .table-container {
             background: var(--surface-solid); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
             overflow-x: auto; margin-bottom: 40px; border: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
         }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
         th { background: var(--header-bg); color: white; padding: 15px 14px; font-weight: 600; white-space: nowrap; }
@@ -483,6 +485,7 @@
             background: var(--surface); backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt)); -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(var(--saturate-amt));
             border-top: 1px solid var(--border); padding: 8px 6px calc(8px + env(safe-area-inset-bottom)) 6px;
             justify-content: center; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+            transform: translateZ(0); /* apni GPU layer par promote - scroll ke waqt blur bar-bar repaint nahi hoga */
         }
         .bnav-btn {
             background: none; border: none; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px;
@@ -772,7 +775,7 @@
                 </select>
                 <div class="search-wrap">
                     <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search Driver, Car Model, Location..." autocomplete="off"
-                        onkeyup="handleSearchKeyup(event)" oninput="renderSearchSuggestions()" onfocus="renderSearchSuggestions()" onblur="hideSuggestionsSoon()">
+                        onkeyup="handleSearchKeyup(event)" oninput="debouncedRenderSuggestions()" onfocus="renderSearchSuggestions()" onblur="hideSuggestionsSoon()">
                     <div class="search-suggestions" id="searchSuggestions"></div>
                 </div>
             </div>
@@ -1045,12 +1048,12 @@
             const fileDriverSelfie = document.getElementById('driverSelfieImage').files[0];
 
             Promise.all([
-                toBase64(fileStart),
-                toBase64(fileEnd),
-                toBase64(fileCarPhoto),
+                compressImageForUpload(fileStart),
+                compressImageForUpload(fileEnd),
+                compressImageForUpload(fileCarPhoto),
                 toBase64(fileCarVideo),
-                toBase64(fileDriverSelfie)
-            ]).then(([startBase64, endBase64, carPhotoBase64, carVideoBase64, driverSelfieBase64]) => {
+                compressImageForUpload(fileDriverSelfie)
+            ]).then(([startRes, endRes, carPhotoRes, carVideoBase64, driverSelfieRes]) => {
                 const formData = {
                     driverName: document.getElementById('driverName').value,
                     tripDate: document.getElementById('tripDate').value,
@@ -1061,21 +1064,21 @@
                     startKm: startKm,
                     endKm: endKm,
                     totalKm: totalKmVal,
-                    startImage: startBase64,
-                    startImageName: fileStart.name,
-                    startImageType: fileStart.type,
-                    endImage: endBase64,
-                    endImageName: fileEnd.name,
-                    endImageType: fileEnd.type,
-                    carPhoto: carPhotoBase64,
-                    carPhotoName: fileCarPhoto.name,
-                    carPhotoType: fileCarPhoto.type,
+                    startImage: startRes.base64,
+                    startImageName: startRes.name,
+                    startImageType: startRes.type,
+                    endImage: endRes.base64,
+                    endImageName: endRes.name,
+                    endImageType: endRes.type,
+                    carPhoto: carPhotoRes.base64,
+                    carPhotoName: carPhotoRes.name,
+                    carPhotoType: carPhotoRes.type,
                     carVideo: carVideoBase64,
                     carVideoName: fileCarVideo.name,
                     carVideoType: fileCarVideo.type,
-                    driverSelfie: driverSelfieBase64,
-                    driverSelfieName: fileDriverSelfie.name,
-                    driverSelfieType: fileDriverSelfie.type
+                    driverSelfie: driverSelfieRes.base64,
+                    driverSelfieName: driverSelfieRes.name,
+                    driverSelfieType: driverSelfieRes.type
                 };
 
                 fetch(scriptURL, {
@@ -1118,6 +1121,49 @@
                 reader.readAsDataURL(file);
                 reader.onload = () => resolve(reader.result.split(',')[1]);
                 reader.onerror = error => reject(error);
+            });
+        }
+
+        function toJpgName(name) {
+            return (name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+        }
+
+        // Phone camera se photo aksar 3-8MB tak badi aati hai - usse seedha base64 karke bhejne se
+        // "Submitting..." wala step slow mobile data par bahut der tak atka reh jaata hai.
+        // Yahan photo ko upload se pehle hi resize (max 1600px) + JPEG compress kar dete hain
+        // (~150-400KB tak), jisse submit turant fast ho jaata hai. Video ko chhua nahi hai.
+        function compressImageForUpload(file, maxDim = 1600, quality = 0.8) {
+            return new Promise((resolve) => {
+                if (!file) { resolve({ base64: '', type: '', name: '' }); return; }
+                if (!file.type || !file.type.startsWith('image/')) {
+                    toBase64(file).then(b64 => resolve({ base64: b64, type: file.type, name: file.name }));
+                    return;
+                }
+                const objectUrl = URL.createObjectURL(file);
+                const fallbackToOriginal = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    toBase64(file).then(b64 => resolve({ base64: b64, type: file.type, name: file.name }));
+                };
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        URL.revokeObjectURL(objectUrl);
+                        let width = img.naturalWidth, height = img.naturalHeight;
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+                            else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width; canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve({ base64: dataUrl.split(',')[1], type: 'image/jpeg', name: toJpgName(file.name) });
+                    } catch (e) {
+                        fallbackToOriginal(); // safety net: agar canvas kisi wajah se fail ho jaaye
+                    }
+                };
+                img.onerror = fallbackToOriginal;
+                img.src = objectUrl;
             });
         }
 
@@ -1517,46 +1563,68 @@
         }
 
         // ============ SWIPE GESTURE (mobile trip cards) ============
+        // IMPORTANT FIX: pehle yeh function har render (yaani har search keystroke!) par har card ke liye
+        // NAYE window.addEventListener('mousemove'/'mouseup', ...) jodta tha jo kabhi hatte nahi the.
+        // Isi wajah se dashboard jitni der use hota, utna hi zyada slow/laggy hota jaata tha (memory leak).
+        // Ab ek hi delegated listener (poori list par) sirf ek baar lagta hai - naye cards apne aap kaam karte hain.
+        let swipeState = { card: null, startX: 0, currentX: 0, dragging: false, wasOpen: false };
+        const SWIPE_MAX = -140;
+
+        function swipeStart(card, clientX) {
+            swipeState.card = card;
+            swipeState.startX = clientX;
+            swipeState.currentX = clientX;
+            swipeState.dragging = true;
+            swipeState.wasOpen = card.classList.contains('swipe-opened');
+            card.classList.add('swiping');
+        }
+        function swipeMove(clientX) {
+            if (!swipeState.dragging || !swipeState.card) return;
+            swipeState.currentX = clientX;
+            let delta = swipeState.currentX - swipeState.startX;
+            let base = swipeState.wasOpen ? SWIPE_MAX : 0;
+            let translate = Math.min(0, Math.max(SWIPE_MAX, base + delta));
+            swipeState.card.style.transform = `translateX(${translate}px)`;
+        }
+        function swipeEnd() {
+            if (!swipeState.dragging || !swipeState.card) return;
+            let card = swipeState.card;
+            card.classList.remove('swiping');
+            let delta = swipeState.currentX - swipeState.startX;
+            let base = swipeState.wasOpen ? SWIPE_MAX : 0;
+            let finalPos = base + delta;
+            let nowOpen = finalPos < SWIPE_MAX / 2;
+            card.style.transform = nowOpen ? `translateX(${SWIPE_MAX}px)` : 'translateX(0)';
+            card.classList.toggle('swipe-opened', nowOpen);
+            swipeState = { card: null, startX: 0, currentX: 0, dragging: false, wasOpen: false };
+        }
+
         function setupSwipeCards() {
-            document.querySelectorAll('.trip-card').forEach(card => {
-                let startX = 0, currentX = 0, dragging = false, opened = false;
-                const maxSwipe = -140;
+            let list = document.getElementById('tripCardsList');
+            if (list.dataset.swipeBound === '1') return; // listeners ek hi baar lagte hain, dobara render hone par skip
+            list.dataset.swipeBound = '1';
 
-                function onStart(e) {
-                    dragging = true;
-                    startX = (e.touches ? e.touches[0].clientX : e.clientX);
-                    card.classList.add('swiping');
-                }
-                function onMove(e) {
-                    if (!dragging) return;
-                    currentX = (e.touches ? e.touches[0].clientX : e.clientX);
-                    let delta = currentX - startX;
-                    let base = opened ? maxSwipe : 0;
-                    let translate = Math.min(0, Math.max(maxSwipe, base + delta));
-                    card.style.transform = `translateX(${translate}px)`;
-                }
-                function onEnd() {
-                    if (!dragging) return;
-                    dragging = false;
-                    card.classList.remove('swiping');
-                    let delta = currentX - startX;
-                    let base = opened ? maxSwipe : 0;
-                    let finalPos = base + delta;
-                    opened = finalPos < maxSwipe / 2;
-                    card.style.transform = opened ? `translateX(${maxSwipe}px)` : 'translateX(0)';
-                    currentX = startX = 0;
-                }
+            list.addEventListener('touchstart', (e) => {
+                let card = e.target.closest('.trip-card');
+                if (card) swipeStart(card, e.touches[0].clientX);
+            }, { passive: true });
+            list.addEventListener('touchmove', (e) => {
+                if (swipeState.dragging) swipeMove(e.touches[0].clientX);
+            }, { passive: true });
+            list.addEventListener('touchend', swipeEnd);
 
-                card.addEventListener('touchstart', onStart, { passive: true });
-                card.addEventListener('touchmove', onMove, { passive: true });
-                card.addEventListener('touchend', onEnd);
-                card.addEventListener('mousedown', onStart);
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('mouseup', onEnd);
+            list.addEventListener('mousedown', (e) => {
+                let card = e.target.closest('.trip-card');
+                if (card) swipeStart(card, e.clientX);
+            });
+            window.addEventListener('mousemove', (e) => swipeMove(e.clientX));
+            window.addEventListener('mouseup', swipeEnd);
 
-                card.addEventListener('click', () => {
-                    if (!opened) openSheet(parseInt(card.dataset.idx));
-                });
+            list.addEventListener('click', (e) => {
+                let card = e.target.closest('.trip-card');
+                if (card && !card.classList.contains('swipe-opened')) {
+                    openSheet(parseInt(card.dataset.idx));
+                }
             });
         }
 
@@ -1603,6 +1671,19 @@
         // ============ SEARCH WITH LIVE SUGGESTIONS ============
         let suggHideTimer = null;
         let highlightedIdx = -1;
+
+        function debounce(fn, wait) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+        // applyFilters() "heavy" hai (poori list filter + table/cards rebuild + chart redraw), isliye
+        // har keystroke par turant nahi chalate - thoda ruk kar (debounce) chalate hain taaki typing
+        // buttery-smooth rahe aur beech-beech mein table/chart jhatke se na ghume
+        const debouncedApplyFilters = debounce(applyFilters, 280);
+        const debouncedRenderSuggestions = debounce(renderSearchSuggestions, 120);
         function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
         function highlightMatch(text, q) {
             if (!q) return text;
@@ -1677,7 +1758,7 @@
                 return;
             }
             if (e.key === 'Escape') { hideSuggestions(); return; }
-            applyFilters();
+            debouncedApplyFilters();
         }
 
         // ============ PULL TO REFRESH ============
