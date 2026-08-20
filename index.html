@@ -356,6 +356,7 @@
             position: relative; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px; box-shadow: var(--shadow-sm);
             opacity: 0; animation: tripCardIn 0.6s var(--spring) both;
         }
+        .trip-card-wrap-noanim { animation: none; opacity: 1; }
         .trip-card-actions {
             position: absolute; top: 0; right: 0; bottom: 0; width: 150px; display: flex;
             background: var(--accent); border-radius: var(--radius-md);
@@ -1482,59 +1483,78 @@
             let totalTrips = data.length;
             let sumKm = 0;
 
+            // PERF FIX: desktop table (<table>) is completely hidden on mobile (display:none, see
+            // @media max-width:760px). Building 150 <tr> rows there was pure wasted work on phones -
+            // it never even painted. Ab hum sirf woh cheez banate hain jo actually screen par dikhti hai.
+            let isMobileView = window.innerWidth <= 760;
+
             let tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
             let cardsList = document.getElementById('tripCardsList');
-            cardsList.innerHTML = '';
+
+            // PERF FIX: pehle har row ke liye document.createElement + appendChild call hota tha -
+            // 150 entries par 300 alag-alag DOM inserts, har ek apna reflow trigger karta tha (bahut
+            // slow, khaaskar Android par). Ab poora HTML string me jodkar EK hi baar innerHTML set
+            // karte hain - browser ko sirf ek hi reflow/paint karna padta hai.
+            let tableRowsHtml = [];
+            let cardsHtml = [];
+            // Bahut saare cards ek saath "fade+slide in" animate karna (150 elements!) GPU/paint par
+            // bhaari padta hai aur jaam lagata hai. Ab sirf pehle ~18 cards (jo waise bhi pehli screen
+            // par dikhte hain) stagger-animate hote hain; baaki turant, bina animation ke dikhte hain.
+            const ANIMATE_LIMIT = 18;
 
             data.forEach((row, idx) => {
                 let km = parseFloat(row['Total KM'] || 0);
                 sumKm += km;
 
-                // Desktop table row
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row['Timestamp'] ? new Date(row['Timestamp']).toLocaleString() : ''}</td>
-                    <td><b>${row['Driver Name'] || ''}</b></td>
-                    <td>${row['Date'] || ''}</td>
-                    <td><span style="background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-weight: 600;">${normCar(row['Car Model'])}</span></td>
-                    <td>${row['Start From'] || ''}</td>
-                    <td>${row['End To'] || ''}</td>
-                    <td><b style="color: var(--accent);">${km.toLocaleString()} KM</b></td>
-                    <td>${row['Assigned By'] || ''}</td>
-                    <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
-                    <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
-                    <td>${row['Car Photo Link'] ? `<a href="${row['Car Photo Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
-                    <td>${row['Car Video Link'] ? `<a href="${row['Car Video Link']}" target="_blank" class="photo-link">Watch</a>` : 'No Video'}</td>
-                    <td>${row['Driver Selfie Link'] ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
-                `;
-                tbody.appendChild(tr);
+                if (!isMobileView) {
+                    tableRowsHtml.push(`
+                        <tr>
+                            <td>${row['Timestamp'] ? new Date(row['Timestamp']).toLocaleString() : ''}</td>
+                            <td><b>${row['Driver Name'] || ''}</b></td>
+                            <td>${row['Date'] || ''}</td>
+                            <td><span style="background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-weight: 600;">${normCar(row['Car Model'])}</span></td>
+                            <td>${row['Start From'] || ''}</td>
+                            <td>${row['End To'] || ''}</td>
+                            <td><b style="color: var(--accent);">${km.toLocaleString()} KM</b></td>
+                            <td>${row['Assigned By'] || ''}</td>
+                            <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                            <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                            <td>${row['Car Photo Link'] ? `<a href="${row['Car Photo Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                            <td>${row['Car Video Link'] ? `<a href="${row['Car Video Link']}" target="_blank" class="photo-link">Watch</a>` : 'No Video'}</td>
+                            <td>${row['Driver Selfie Link'] ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                        </tr>
+                    `);
+                }
 
                 // Mobile swipeable card
-                let wrap = document.createElement('div');
-                wrap.className = 'trip-card-wrap';
-                wrap.style.animationDelay = `${Math.min(idx * 45, 480)}ms`;
-                wrap.innerHTML = `
-                    <div class="trip-card-actions">
-                        <button onclick="openSheet(${idx})"><i class="fa-solid fa-image"></i>Photos</button>
-                    </div>
-                    <div class="trip-card" data-idx="${idx}">
-                        <div class="trip-card-top">
-                            <div>
-                                <div class="trip-card-driver">${row['Driver Name'] || 'Unknown'}</div>
-                                <div class="trip-card-date">${row['Date'] || ''}</div>
+                let animate = idx < ANIMATE_LIMIT;
+                let animStyle = animate ? `style="animation-delay:${idx * 45}ms;"` : `style="opacity:1;"`;
+                let animClass = animate ? 'trip-card-wrap' : 'trip-card-wrap trip-card-wrap-noanim';
+                cardsHtml.push(`
+                    <div class="${animClass}" ${animStyle}>
+                        <div class="trip-card-actions">
+                            <button onclick="openSheet(${idx})"><i class="fa-solid fa-image"></i>Photos</button>
+                        </div>
+                        <div class="trip-card" data-idx="${idx}">
+                            <div class="trip-card-top">
+                                <div>
+                                    <div class="trip-card-driver">${row['Driver Name'] || 'Unknown'}</div>
+                                    <div class="trip-card-date">${row['Date'] || ''}</div>
+                                </div>
+                                <div class="trip-card-km">${km.toLocaleString()} KM</div>
                             </div>
-                            <div class="trip-card-km">${km.toLocaleString()} KM</div>
-                        </div>
-                        <div class="trip-card-route"><i class="fa-solid fa-location-dot" style="color: var(--accent-2);"></i> <b>${row['Start From'] || '—'}</b> <i class="fa-solid fa-arrow-right" style="color: var(--text-tertiary); font-size:10px;"></i> <b>${row['End To'] || '—'}</b></div>
-                        <div class="trip-card-meta">
-                            <span class="trip-card-car-tag">${normCar(row['Car Model'])}</span>
-                            <span class="trip-card-hint"><i class="fa-solid fa-chevron-left"></i> swipe for photos</span>
+                            <div class="trip-card-route"><i class="fa-solid fa-location-dot" style="color: var(--accent-2);"></i> <b>${row['Start From'] || '—'}</b> <i class="fa-solid fa-arrow-right" style="color: var(--text-tertiary); font-size:10px;"></i> <b>${row['End To'] || '—'}</b></div>
+                            <div class="trip-card-meta">
+                                <span class="trip-card-car-tag">${normCar(row['Car Model'])}</span>
+                                <span class="trip-card-hint"><i class="fa-solid fa-chevron-left"></i> swipe for photos</span>
+                            </div>
                         </div>
                     </div>
-                `;
-                cardsList.appendChild(wrap);
+                `);
             });
+
+            if (!isMobileView) tbody.innerHTML = tableRowsHtml.join('');
+            cardsList.innerHTML = cardsHtml.join('');
 
             animateCounter(document.getElementById('totalTrips'), totalTrips, '');
             animateCounter(document.getElementById('totalKmCard'), sumKm, ' KM');
@@ -1545,9 +1565,50 @@
 
             window.currentRenderedRows = data;
             setupSwipeCards();
+            setupLazyTableOnResize();
         }
 
         // ============ SKELETON LOADERS ============
+        // PERF FIX: agar phone par pehli baar mobile view me render hua (table skip ho gaya), aur user
+        // baad me screen rotate/resize kare desktop-width tak, to table abhi bhi khaali rahega. Yeh
+        // ek-baar-chalne wala resize listener us case ko cover karta hai - sirf tab table banata hai
+        // jab zaroorat ho (lazy), roz-roz nahi.
+        let lazyTableResizeBound = false;
+        function setupLazyTableOnResize() {
+            if (lazyTableResizeBound) return;
+            lazyTableResizeBound = true;
+            let resizeTimer = null;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    let tbody = document.getElementById('tableBody');
+                    if (window.innerWidth > 760 && tbody && tbody.children.length === 0 && (window.currentRenderedRows || []).length) {
+                        let rowsHtml = window.currentRenderedRows.map(row => {
+                            let km = parseFloat(row['Total KM'] || 0);
+                            return `
+                                <tr>
+                                    <td>${row['Timestamp'] ? new Date(row['Timestamp']).toLocaleString() : ''}</td>
+                                    <td><b>${row['Driver Name'] || ''}</b></td>
+                                    <td>${row['Date'] || ''}</td>
+                                    <td><span style="background: var(--surface-2); padding: 4px 8px; border-radius: 6px; font-weight: 600;">${normCar(row['Car Model'])}</span></td>
+                                    <td>${row['Start From'] || ''}</td>
+                                    <td>${row['End To'] || ''}</td>
+                                    <td><b style="color: var(--accent);">${km.toLocaleString()} KM</b></td>
+                                    <td>${row['Assigned By'] || ''}</td>
+                                    <td>${row['Start Image Link'] ? `<a href="${row['Start Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                                    <td>${row['End Image Link'] ? `<a href="${row['End Image Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                                    <td>${row['Car Photo Link'] ? `<a href="${row['Car Photo Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                                    <td>${row['Car Video Link'] ? `<a href="${row['Car Video Link']}" target="_blank" class="photo-link">Watch</a>` : 'No Video'}</td>
+                                    <td>${row['Driver Selfie Link'] ? `<a href="${row['Driver Selfie Link']}" target="_blank" class="photo-link">View</a>` : 'No Image'}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                        tbody.innerHTML = rowsHtml;
+                    }
+                }, 200);
+            });
+        }
+
         function renderSkeletons() {
             document.getElementById('loadingText').style.display = 'none';
             document.getElementById('tripTable').style.display = 'none';
