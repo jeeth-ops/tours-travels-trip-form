@@ -247,6 +247,25 @@
             font-weight: 700; font-size: 15px; cursor: pointer;
         }
 
+        /* ============ VIDEO UPLOAD PROGRESS BAR (chhota, top par, non-blocking) ============ */
+        /* Data Submitted popup band hote hi yeh chhota bar top par aa jaata hai aur video
+           upload hote hi live percentage dikhata rehta hai - driver dhyaan me rehta hai ki
+           video abhi bhi upload ho rahi hai. 100% hote hi yeh gayab ho jaata hai aur success
+           popup (#videoStatusModal) khud khul jaata hai. */
+        #videoUploadProgressBar {
+            position: fixed; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-140%);
+            width: min(340px, calc(100% - 32px)); z-index: 1200; background: var(--surface-solid); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); box-shadow: var(--shadow-md); padding: 10px 14px;
+            transition: transform 0.4s var(--spring); pointer-events: none;
+        }
+        #videoUploadProgressBar.open { transform: translateX(-50%) translateY(0); pointer-events: auto; }
+        #videoUploadProgressBar .vupb-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+        #videoUploadProgressBar .vupb-label { font-size: 12.5px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+        #videoUploadProgressBar .vupb-label i { color: var(--accent); }
+        #videoUploadProgressBar .vupb-percent { font-size: 12.5px; font-weight: 700; color: var(--accent); min-width: 34px; text-align: right; }
+        #videoUploadProgressBar .vupb-track { height: 6px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+        #videoUploadProgressBar .vupb-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 6px; transition: width 0.35s var(--ease); }
+
         /* ============ DASHBOARD ============ */
         #dashboardSection { display: none; max-width: 1350px; margin: 0 auto; position: relative; }
         #pullToRefreshIndicator {
@@ -751,6 +770,17 @@
         </div>
     </div>
 
+    <!-- VIDEO UPLOAD PROGRESS BAR - Data Submitted popup band hote hi yeh chhota bar top par
+         aa jaata hai aur video ka live upload percentage dikhata hai. 100% par khud gayab ho
+         jaata hai aur success popup khul jaata hai. -->
+    <div id="videoUploadProgressBar">
+        <div class="vupb-row">
+            <span class="vupb-label"><i class="fa-solid fa-cloud-arrow-up fa-fade"></i> <span id="vupbLabelText">Video is uploading...</span></span>
+            <span class="vupb-percent" id="vupbPercentText">0%</span>
+        </div>
+        <div class="vupb-track"><div class="vupb-fill" id="vupbFill"></div></div>
+    </div>
+
     <!-- VIDEO UPLOAD STATUS POPUP - background video jab complete (ya fail) hoti hai, tab tak
          screen par rehta hai jab tak driver khud "OK" na daba de (toast ki tarah auto-hide nahi hota) -->
     <div id="videoStatusModal">
@@ -1015,6 +1045,10 @@
         populateCarDropdown();
 
         document.getElementById('tripDate').valueAsDate = new Date();
+        // App khulte hi turant check karo - pichhli baar koi video adhoori reh gayi thi kya
+        // (app band ho gaya tha ya phone ne kill kar diya tha). Agar mile to chup-chaap resume
+        // kar do, driver ko kuch karna nahi padta.
+        resumePendingVideoUploads();
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
@@ -1041,6 +1075,24 @@
             m.style.display = 'flex';
             requestAnimationFrame(() => m.classList.add('open'));
         }
+        // ============ VIDEO UPLOAD PROGRESS BAR (chhota, top par, live %) ============
+        function showVideoUploadProgressBar(label) {
+            document.getElementById('vupbLabelText').innerText = label || 'Video is uploading...';
+            document.getElementById('vupbFill').style.width = '0%';
+            document.getElementById('vupbPercentText').innerText = '0%';
+            document.getElementById('videoUploadProgressBar').classList.add('open');
+        }
+        function updateVideoUploadProgress(percent) {
+            const p = Math.max(0, Math.min(100, Math.round(percent)));
+            const fill = document.getElementById('vupbFill');
+            const txt = document.getElementById('vupbPercentText');
+            if (fill) fill.style.width = p + '%';
+            if (txt) txt.innerText = p + '%';
+        }
+        function hideVideoUploadProgressBar() {
+            document.getElementById('videoUploadProgressBar').classList.remove('open');
+        }
+
         function closeVideoStatusModal() {
             let m = document.getElementById('videoStatusModal');
             m.classList.remove('open');
@@ -1262,6 +1314,107 @@
             });
         }
 
+        // ============ PENDING VIDEO UPLOADS (IndexedDB) - SURVIVES APP CLOSE/KILL ============
+        // Driver bahut baar app band kar dete hain ya phone lock ho jaata hai jab video abhi
+        // upload ho rahi hoti hai (2-3 min ki file, background me chal rahi thi). Pehle is case
+        // me video permanently lost ho jaati thi kyunki sab kuch sirf JS memory me tha aur JS
+        // execution ruk jaate hi kuch bhi save nahi bacha. FIX: jaise hi upload session shuru
+        // hota hai, uska sessionUrl + poori (compressed) video blob IndexedDB me save kar dete
+        // hain. App agli baar khulte hi (chaahe kitna bhi time baad) pending record dhoondh kar
+        // khud-ba-khud wahi se resume kar deta hai - Drive resumable API se pucha jaata hai ki
+        // kitne bytes already mil chuke hain, aur sirf baaki bytes hi bheje jaate hain.
+        const PENDING_VIDEO_DB_NAME = 'toursPortalPendingVideos';
+        const PENDING_VIDEO_STORE = 'uploads';
+
+        function openPendingVideoDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(PENDING_VIDEO_DB_NAME, 1);
+                req.onupgradeneeded = () => {
+                    if (!req.result.objectStoreNames.contains(PENDING_VIDEO_STORE)) {
+                        req.result.createObjectStore(PENDING_VIDEO_STORE, { keyPath: 'tripId' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function saveVideoUploadRecord(record) {
+            return openPendingVideoDB().then((db) => new Promise((resolve, reject) => {
+                const tx = db.transaction(PENDING_VIDEO_STORE, 'readwrite');
+                tx.objectStore(PENDING_VIDEO_STORE).put(record);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            }));
+        }
+
+        function deleteVideoUploadRecord(tripId) {
+            return openPendingVideoDB().then((db) => new Promise((resolve, reject) => {
+                const tx = db.transaction(PENDING_VIDEO_STORE, 'readwrite');
+                tx.objectStore(PENDING_VIDEO_STORE).delete(tripId);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            }));
+        }
+
+        function getAllVideoUploadRecords() {
+            return openPendingVideoDB().then((db) => new Promise((resolve, reject) => {
+                const tx = db.transaction(PENDING_VIDEO_STORE, 'readonly');
+                const req = tx.objectStore(PENDING_VIDEO_STORE).getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            }));
+        }
+
+        // App khulte hi (page load) chalta hai - IndexedDB me agar koi adhoori video mile,
+        // usse khud-ba-khud (bina driver ko kuch bataye/karaye) resume kar deta hai. Session
+        // expire ho chuki ho (bahut purani, ~1 week+) to ek naya session bana ke wahi save ki
+        // hui blob se dobara upload kar deta hai - video kabhi bhi haath se dobara record nahi
+        // karni padti.
+        function resumePendingVideoUploads() {
+            getAllVideoUploadRecords().then((records) => {
+                records.forEach((rec) => { retryOrResumeVideoUpload(rec); });
+            }).catch((err) => console.error('Could not check pending video uploads:', err));
+        }
+
+        function retryOrResumeVideoUpload(rec) {
+            showVideoUploadProgressBar('Resuming previous video upload...');
+            return getUploadToken().then((token) => {
+                return queryResumableOffset(rec.sessionUrl, rec.totalSize).then((offset) => {
+                    updateVideoUploadProgress(Math.round((offset / rec.totalSize) * 100));
+                    if (offset > 0) {
+                        return uploadToResumableSession(rec.sessionUrl, rec.blob, token, updateVideoUploadProgress, offset);
+                    }
+                    // Purana session shayad expire ho chuka - naya session bana lo, saved (compressed)
+                    // video blob wahi reuse karke - driver ko dobara video record nahi karni padti.
+                    return initResumableDriveSession(token, rec.fileName, rec.mimeType, rec.totalSize).then((newSessionUrl) => {
+                        return saveVideoUploadRecord(Object.assign({}, rec, { sessionUrl: newSessionUrl })).then(() => {
+                            return uploadToResumableSession(newSessionUrl, rec.blob, token, updateVideoUploadProgress);
+                        });
+                    });
+                });
+            }).then((fileMeta) => {
+                if (!fileMeta || !fileMeta.id) throw new Error('Resume: Drive upload did not return a file id');
+                updateVideoUploadProgress(100);
+                return uploadWithProgressAndRetry(scriptURL, JSON.stringify({
+                    action: 'updateVideoUrl', rowIndex: rec.rowIndex, tripId: rec.tripId, fileId: fileMeta.id
+                }), null, { timeoutMs: 30000, retries: 2 });
+            }).then((response) => {
+                if (!response || response.status !== 'success') {
+                    throw new Error((response && response.message) || 'Could not link uploaded video to the trip row');
+                }
+                return deleteVideoUploadRecord(rec.tripId).then(() => {
+                    hideVideoUploadProgressBar();
+                    openVideoStatusModal(true, "Pichhli baar chhuti hui video ab upload ho gayi ✅");
+                });
+            }).catch((err) => {
+                // Resume bhi fail ho gaya (jaise abhi bhi internet nahi hai) - koi baat nahi,
+                // record IndexedDB me hi safe pada rahega, agli baar app khulne par phir try hoga.
+                console.error('Resume video upload failed, will retry next app open:', err);
+                hideVideoUploadProgressBar();
+            });
+        }
+
         // ============ BACKGROUND VIDEO UPLOAD (non-blocking, DIRECT RESUMABLE UPLOAD) ============
         // Trip (Phase 1) submit ho chuka hai - ab video chup-chaap background me compress hoti
         // hai aur SEEDHA Google Drive API par (Apps Script ko bilkul touch kiye bina) resumable
@@ -1341,7 +1494,7 @@
         // usi chunk ko exponential backoff ke saath dobara try karta hai - agar retries bhi khatam
         // ho jaayein, ek baar Drive se current offset pucha jaata hai (queryResumableOffset) aur
         // wahin se aage badha jaata hai, taaki koi bhi progress waste na ho.
-        function uploadToResumableSession(sessionUrl, blob, token, onProgress) {
+        function uploadToResumableSession(sessionUrl, blob, token, onProgress, startOffset) {
             const totalSize = blob.size;
 
             function putChunk(start, attempt) {
@@ -1376,14 +1529,20 @@
                 });
             }
 
-            return putChunk(0, 0);
+            return putChunk(startOffset || 0, 0);
         }
 
-        // Poora Phase 2 flow: token lo -> session shuru karo -> chunks upload karo -> fileId milo.
-        function uploadVideoDirectToDrive(blob, fileName, mimeType) {
+        // Poora Phase 2 flow: token lo -> session shuru karo -> IndexedDB me save karo (isi ke
+        // baad agar app band/kill ho jaaye, agli baar khulte hi yahi record resume ho jaayega) ->
+        // chunks upload karo -> fileId milo.
+        function uploadVideoDirectToDrive(blob, fileName, mimeType, tripId, rowIndex, onProgress) {
             return getUploadToken().then((token) => {
                 return initResumableDriveSession(token, fileName, mimeType, blob.size).then((sessionUrl) => {
-                    return uploadToResumableSession(sessionUrl, blob, token);
+                    return saveVideoUploadRecord({
+                        tripId: tripId, rowIndex: rowIndex, sessionUrl: sessionUrl,
+                        fileName: fileName, mimeType: mimeType, blob: blob, totalSize: blob.size,
+                        savedAt: Date.now()
+                    }).then(() => uploadToResumableSession(sessionUrl, blob, token, onProgress));
                 });
             }).then((fileMeta) => {
                 if (!fileMeta || !fileMeta.id) throw new Error('Drive upload did not return a file id');
@@ -1392,15 +1551,21 @@
         }
 
         function uploadVideoInBackground(fileCarVideo, tripId, rowIndex) {
-            showToast("Video background me upload ho rahi hai...", "success");
+            // Chhota top progress bar turant dikha do (Data Submitted popup ke turant baad) -
+            // pehle "Preparing..." (compression chal rahi hai), phir asli upload % shuru hoga.
+            showVideoUploadProgressBar('Preparing video...');
             compressVideoForUpload(fileCarVideo).then((res) => {
                 const blob = res.blob || fileCarVideo;
                 const name = res.name || fileCarVideo.name;
                 const type = res.type || fileCarVideo.type;
-                return uploadVideoDirectToDrive(blob, name, type);
+                showVideoUploadProgressBar('Video is uploading...');
+                // Yahan se aage blob IndexedDB me bhi save ho jaayegi (uploadVideoDirectToDrive ke
+                // andar) - app band/kill ho jaaye tab bhi video record surakshit rehti hai.
+                return uploadVideoDirectToDrive(blob, name, type, tripId, rowIndex, updateVideoUploadProgress);
             }).then((fileId) => {
                 // Video Drive par ja chuki hai - ab sirf GAS ko sharing set karke sahi row
                 // update karne ke liye batana hai (chhota, fast call - koi bada payload nahi)
+                updateVideoUploadProgress(100);
                 return uploadWithProgressAndRetry(scriptURL, JSON.stringify({
                     action: 'updateVideoUrl',
                     rowIndex: rowIndex,
@@ -1411,10 +1576,18 @@
                 if (!response || response.status !== 'success') {
                     throw new Error((response && response.message) || 'Could not link uploaded video to the trip row');
                 }
-                openVideoStatusModal(true, "Video has been uploaded successfully");
+                return deleteVideoUploadRecord(tripId).then(() => {
+                    hideVideoUploadProgressBar();
+                    openVideoStatusModal(true, "Video has been uploaded successfully");
+                });
             }).catch((err) => {
+                // NOTE: yahan record ko IndexedDB se delete NAHI karte - agar yeh isliye fail
+                // hua kyunki driver ne app band kar diya / net chala gaya, to record already
+                // uploadVideoDirectToDrive ke andar save ho chuka hoga aur agli baar app khulte
+                // hi (resumePendingVideoUploads) khud resume ho jaayega.
                 console.error('Background video upload failed:', err);
-                openVideoStatusModal(false, "Baaki trip data safe hai, lekin video upload nahi ho paayi. Dobara try karein ya admin ko bata dein.");
+                hideVideoUploadProgressBar();
+                openVideoStatusModal(false, "Baaki trip data safe hai. Video upload abhi poori nahi hui - agli baar app kholte hi khud-ba-khud dobara try hogi. Chahe to abhi bhi wapas try kar sakte hain.");
             });
         }
 
