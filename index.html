@@ -1578,17 +1578,28 @@
         }
 
         function uploadVideoInBackground(fileCarVideo, tripId, rowIndex) {
-            // Chhota top progress bar turant dikha do (Data Submitted popup ke turant baad) -
-            // pehle "Preparing..." (compression chal rahi hai), phir asli upload % shuru hoga.
-            showVideoUploadProgressBar('Preparing video...');
-            compressVideoForUpload(fileCarVideo).then((res) => {
+            // Ab ek hi label use hota hai poore process (compression + upload) ke liye -
+            // koi alag "Preparing..." step nahi dikhta. Bar shuru se hi hilta rehta hai:
+            // compression hisse ko 0-50% maan lete hain, aur asli Drive upload ko 50-100%
+            // (agar compression hui hi nahi - jaise chhoti video ya Safari - to seedha
+            // poora 0-100% upload ko hi milta hai). Isse bar kabhi bhi lambe time tak
+            // 0% par static nahi rehta.
+            showVideoUploadProgressBar('Uploading video...');
+            let compressionHappened = false;
+            compressVideoForUpload(fileCarVideo, (p) => {
+                compressionHappened = true;
+                updateVideoUploadProgress(Math.round(p * 0.5));
+            }).then((res) => {
                 const blob = res.blob || fileCarVideo;
                 const name = res.name || fileCarVideo.name;
                 const type = res.type || fileCarVideo.type;
-                showVideoUploadProgressBar('Video is uploading...');
+                const base = compressionHappened ? 50 : 0;
+                const span = compressionHappened ? 50 : 100;
                 // Yahan se aage blob IndexedDB me bhi save ho jaayegi (uploadVideoDirectToDrive ke
                 // andar) - app band/kill ho jaaye tab bhi video record surakshit rehti hai.
-                return uploadVideoDirectToDrive(blob, name, type, tripId, rowIndex, updateVideoUploadProgress);
+                return uploadVideoDirectToDrive(blob, name, type, tripId, rowIndex, (p) => {
+                    updateVideoUploadProgress(base + Math.round((p / 100) * span));
+                });
             }).then((fileId) => {
                 // Video Drive par ja chuki hai - ab sirf GAS ko sharing set karke sahi row
                 // update karne ke liye batana hai (chhota, fast call - koi bada payload nahi)
@@ -1650,7 +1661,7 @@
         // ek bade base64 string me convert karna (khaaskar bina-compress hui 100-200MB original
         // par) memory-heavy tha; chunked upload ab lazy tareeke se chhote-chhote slices hi
         // base64 karta hai, ek time par sirf ek chunk jitni memory lagti hai.
-        function compressVideoForUpload(file) {
+        function compressVideoForUpload(file, onProgress) {
             const SKIP_THRESHOLD = 12 * 1024 * 1024; // 12MB se chhoti video already fast hai, chhedo mat
 
             const sendOriginal = () => resolve({ blob: file, type: file.type, name: file.name });
@@ -1777,6 +1788,17 @@
                         // stopAndFinalize mat karo, balki tab wapas visible hone par resume karo
                         // (neeche visibilitychange listener me).
                         video.onpause = () => { if (video.ended || settled) stopAndFinalize(); };
+
+                        // Compression asli video ki length jitna hi time leta hai (real-time
+                        // playback record karke), isliye 2-3 min ki video me "Preparing..."
+                        // phase bhi 2-3 min tak chal sakta hai. Pehle is poore time bar 0% par
+                        // static rehta tha (lagta tha atak gaya) - ab video kitni chal chuki
+                        // hai usi hisaab se % dikhate hain, taaki "Preparing" ke waqt bhi bar
+                        // dheere-dheere aage badhta dikhe.
+                        video.ontimeupdate = () => {
+                            if (settled || !onProgress || !video.duration || !isFinite(video.duration)) return;
+                            onProgress(Math.min(99, Math.round((video.currentTime / video.duration) * 100)));
+                        };
 
                         const onVisibilityChange = () => {
                             if (!document.hidden && video.paused && !video.ended && !settled) {
