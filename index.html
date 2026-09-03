@@ -218,6 +218,32 @@
         }
         .login-box .close-modal { margin-top: 12px; background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; }
 
+        /* ============ VIDEO STATUS POPUP (persistent - stays until driver taps OK) ============ */
+        /* Toast 3.5 sec me gayab ho jaata hai - lambi video background me 2-3 min baad complete
+           hoti hai, tab tak driver phone kahin aur use kar raha ho sakta hai aur toast miss ho
+           sakta hai. Ye popup tab tak screen par rehta hai jab tak driver khud OK na daba de. */
+        #videoStatusModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0); display: none; justify-content: center; align-items: center; z-index: 1000;
+            transition: background 0.35s var(--ease);
+        }
+        #videoStatusModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(var(--blur-modal)); -webkit-backdrop-filter: blur(var(--blur-modal)); }
+        .video-status-box {
+            background: var(--surface-solid); padding: 36px 32px; border-radius: 26px; width: 380px; max-width: 88vw; text-align: center;
+            box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+            transform: scale(0.85) translateY(20px); opacity: 0; transition: transform 0.4s var(--spring), opacity 0.3s var(--ease);
+        }
+        #videoStatusModal.open .video-status-box { transform: scale(1) translateY(0); opacity: 1; }
+        .video-status-box i.status-icon { font-size: 44px; margin-bottom: 14px; }
+        .video-status-box i.status-icon.ok { color: var(--accent-2); }
+        .video-status-box i.status-icon.fail { color: var(--danger); }
+        .video-status-box h3 { margin-bottom: 8px; color: var(--text); font-size: 20px; letter-spacing: -0.3px; }
+        .video-status-box p { color: var(--text-secondary); font-size: 14px; margin-bottom: 22px; line-height: 1.5; }
+        .video-status-box button {
+            width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px;
+            font-weight: 700; font-size: 15px; cursor: pointer;
+        }
+
         /* ============ DASHBOARD ============ */
         #dashboardSection { display: none; max-width: 1350px; margin: 0 auto; position: relative; }
         #pullToRefreshIndicator {
@@ -446,7 +472,7 @@
 
         @media print {
             body { background: white; padding: 0; color: black; }
-            .top-nav, #loginModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav, #bottomNav, #bottomSheetOverlay, #tripCardsList { display: none !important; }
+            .top-nav, #loginModal, #videoStatusModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav, #bottomNav, #bottomSheetOverlay, #tripCardsList { display: none !important; }
             #dashboardSection { display: block !important; max-width: 100% !important; margin: 0; padding: 0; }
             header { box-shadow: none; border-bottom: 3px solid #0f172a; padding: 15px 0; margin-bottom: 20px; }
             header h2::before { content: "CORPORATE EXPENSE & TRIP INVOICE STATEMENT\A"; font-size: 12px; color: #64748b; display: block; font-weight: normal; }
@@ -723,6 +749,17 @@
         </div>
     </div>
 
+    <!-- VIDEO UPLOAD STATUS POPUP - background video jab complete (ya fail) hoti hai, tab tak
+         screen par rehta hai jab tak driver khud "OK" na daba de (toast ki tarah auto-hide nahi hota) -->
+    <div id="videoStatusModal">
+        <div class="video-status-box">
+            <i class="fa-solid" id="videoStatusIcon"></i>
+            <h3 id="videoStatusTitle"></h3>
+            <p id="videoStatusMsg"></p>
+            <button onclick="closeVideoStatusModal()">OK</button>
+        </div>
+    </div>
+
     <!-- ENTERPRISE ADMIN DASHBOARD SECTION -->
 <div id="dashboardSection">
     <div id="pullToRefreshIndicator"><i class="fa-solid fa-arrows-rotate"></i></div>
@@ -980,6 +1017,23 @@
             }, 3500);
         }
 
+        // Video background upload complete (ya fail) hone par ye popup dikhata hai - toast ke
+        // ulat, ye tab tak screen par rehta hai jab tak driver khud OK na daba de, taaki lambi
+        // video 2-3 min baad complete ho toh bhi driver miss na kare.
+        function openVideoStatusModal(success, message) {
+            document.getElementById('videoStatusIcon').className = 'fa-solid status-icon ' + (success ? 'ok fa-circle-check' : 'fail fa-circle-exclamation');
+            document.getElementById('videoStatusTitle').innerText = success ? 'Video Uploaded ✅' : 'Video Upload Failed';
+            document.getElementById('videoStatusMsg').innerText = message;
+            let m = document.getElementById('videoStatusModal');
+            m.style.display = 'flex';
+            requestAnimationFrame(() => m.classList.add('open'));
+        }
+        function closeVideoStatusModal() {
+            let m = document.getElementById('videoStatusModal');
+            m.classList.remove('open');
+            setTimeout(() => { m.style.display = 'none'; }, 300);
+        }
+
         // Naam/Location fields ko "First Letter Capital, baaki small" format mein rakhta hai
         function toTitleCase(str) {
             return (str || '').toLowerCase().replace(/(^|[\s\-\/])([a-z])/g, (m, sep, chr) => sep + chr.toUpperCase());
@@ -1096,7 +1150,7 @@
                 compressImageForUpload(fileCarPhoto),
                 compressImageForUpload(fileDriverSelfie)
             ]).then(([startRes, endRes, carPhotoRes, driverSelfieRes]) => {
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server... 0%';
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server...';
 
                 const formData = {
                     tripId: tripId,
@@ -1130,12 +1184,12 @@
                 };
 
                 // Bade payload me ek plain fetch() kabhi kabhi beech me hi fail ho jaata hai bina
-                // wajah bataye - XHR use karte hain taaki (a) real % progress dikha sakein aur
-                // (b) ek transient failure par khud-ba-khud ek baar retry ho jaaye, driver ko
-                // dubara form bharna na pade
-                uploadWithProgressAndRetry(scriptURL, JSON.stringify(formData), (pct) => {
-                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server... ' + pct + '%';
-                })
+                // wajah bataye - isliye XHR + retry use karte hain. NOTE: upload % progress
+                // ISLIYE NAHI dikha rahe - XHR ka upload.onprogress listener attach karte hi
+                // browser Google Apps Script ko ek CORS "preflight" (OPTIONS) request bhejta hai,
+                // aur Apps Script preflight ka jawab nahi de sakta (khud Google ki limitation) -
+                // isse poora submit CORS error se block ho jaata hai. Retry abhi bhi kaam karta hai.
+                uploadWithProgressAndRetry(scriptURL, JSON.stringify(formData), null)
                 .then(response => {
                     showToast("Trip Details Submitted Successfully! ✅", "success");
 
@@ -1191,13 +1245,13 @@
                 return uploadWithProgressAndRetry(scriptURL, JSON.stringify(payload), null);
             }).then((response) => {
                 if (response && response.status === 'success') {
-                    showToast("Car video uploaded ✅", "success");
+                    openVideoStatusModal(true, "Car video safely sheet me upload ho chuki hai.");
                 } else {
-                    showToast("Video upload me dikkat hui, baaki trip data safe hai.", "error");
+                    openVideoStatusModal(false, "Baaki trip data safe hai, lekin video upload me dikkat hui. Dobara try karein ya admin ko bata dein.");
                 }
             }).catch((err) => {
                 console.error('Background video upload failed:', err);
-                showToast("Video upload nahi ho paayi, baaki trip data safe hai.", "error");
+                openVideoStatusModal(false, "Baaki trip data safe hai, lekin video upload nahi ho paayi. Dobara try karein ya admin ko bata dein.");
             });
         }
 
@@ -1361,11 +1415,10 @@
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', url, true);
                 xhr.timeout = 90000; // safety cap - request hamesha ke liye latakni nahi chahiye
-                if (xhr.upload && onProgress) {
-                    xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable) onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
-                    };
-                }
+                // NOTE: xhr.upload par KOI bhi listener (jaise onprogress) attach mat karo -
+                // isse browser Google Apps Script ko CORS preflight (OPTIONS) bhejta hai, jiska
+                // Apps Script jawab nahi de sakta (Google ki khud ki limitation), aur poora
+                // request block ho jaata hai. Isliye onProgress yahan intentionally ignore hai.
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         onProgress && onProgress(100);
