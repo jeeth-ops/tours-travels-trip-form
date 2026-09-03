@@ -591,7 +591,7 @@
                 </div>
                 <!-- Start Odometer Section -->
                 <div class="form-group">
-                    <label>Start Odometer Photo *</label>
+                    <label>Start Odometer Photo</label>
                     <div id="startActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
                         <button type="button" onclick="document.getElementById('startCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-camera"></i> Open Camera
@@ -608,12 +608,12 @@
                     </div>
                     <input type="file" id="startCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('start', this)">
                     <input type="file" id="startGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('start', this)">
-                    <input type="file" id="startImage" required style="display: none;">
+                    <input type="file" id="startImage" style="display: none;">
                 </div>
 
                 <!-- End Odometer Section -->
                 <div class="form-group">
-                    <label>End Odometer Photo *</label>
+                    <label>End Odometer Photo</label>
                     <div id="endActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
                         <button type="button" onclick="document.getElementById('endCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-camera"></i> Open Camera
@@ -630,12 +630,12 @@
                     </div>
                     <input type="file" id="endCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('end', this)">
                     <input type="file" id="endGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('end', this)">
-                    <input type="file" id="endImage" required style="display: none;">
+                    <input type="file" id="endImage" style="display: none;">
                 </div>
 
                 <!-- Car Photo Section -->
                 <div class="form-group">
-                    <label>Photo of Car *</label>
+                    <label>Photo of Car</label>
                     <div id="carPhotoActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
                         <button type="button" onclick="document.getElementById('carPhotoCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-camera"></i> Open Camera
@@ -652,12 +652,12 @@
                     </div>
                     <input type="file" id="carPhotoCamInput" accept="image/*" capture="environment" style="display: none;" onchange="setOdometerFile('carPhoto', this)">
                     <input type="file" id="carPhotoGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('carPhoto', this)">
-                    <input type="file" id="carPhotoImage" required style="display: none;">
+                    <input type="file" id="carPhotoImage" style="display: none;">
                 </div>
 
                 <!-- Car Video Section -->
                 <div class="form-group">
-                    <label>Video of Car *</label>
+                    <label>Video of Car</label>
                     <div id="carVideoActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
                         <button type="button" onclick="document.getElementById('carVideoCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-video"></i> Open Camera
@@ -674,13 +674,13 @@
                     </div>
                     <input type="file" id="carVideoCamInput" accept="video/*" capture="environment" style="display: none;" onchange="setOdometerFile('carVideo', this)">
                     <input type="file" id="carVideoGalInput" accept="video/*" style="display: none;" onchange="setOdometerFile('carVideo', this)">
-                    <input type="file" id="carVideoImage" required style="display: none;">
-                    <span style="font-size: 11px; color: var(--text-tertiary); display: block; margin-top: 2px;">Tip: Short clip rakhein (10-15 sec), lambi video upload slow ho sakti hai.</span>
+                    <input type="file" id="carVideoImage" style="display: none;">
+                    <span style="font-size: 11px; color: var(--text-tertiary); display: block; margin-top: 2px;">Trip details turant submit ho jaayenge - video background me apne aap compress hoke upload hoti rahegi, iske liye wait nahi karna padega.</span>
                 </div>
 
                 <!-- Driver Selfie Section -->
                 <div class="form-group">
-                    <label>Selfie of Driver *</label>
+                    <label>Selfie of Driver</label>
                     <div id="driverSelfieActionBtns" style="display: flex; gap: 8px; margin-bottom: 4px;">
                         <button type="button" onclick="document.getElementById('driverSelfieCamInput').click()" style="flex: 1; background: var(--accent); color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
                             <i class="fa-solid fa-camera"></i> Open Camera
@@ -697,7 +697,7 @@
                     </div>
                     <input type="file" id="driverSelfieCamInput" accept="image/*" capture="user" style="display: none;" onchange="setOdometerFile('driverSelfie', this)">
                     <input type="file" id="driverSelfieGalInput" accept="image/*" style="display: none;" onchange="setOdometerFile('driverSelfie', this)">
-                    <input type="file" id="driverSelfieImage" required style="display: none;">
+                    <input type="file" id="driverSelfieImage" style="display: none;">
                 </div>
             </div>
 
@@ -1073,31 +1073,33 @@
             const fileCarVideo = document.getElementById('carVideoImage').files[0];
             const fileDriverSelfie = document.getElementById('driverSelfieImage').files[0];
 
-            // PERF: bada video (jaise 45+ second clip) upload bahut slow/unreliable ho sakta hai,
-            // khaaskar weak network par. Compress nahi kar sakte client-side, isliye pehle hi warn
-            // kar dete hain taaki driver chhota, sharp video le - upload fail hone se behtar hai.
-            if (fileCarVideo && fileCarVideo.size > 20 * 1024 * 1024) {
-                showToast("Video is quite large (" + (fileCarVideo.size / (1024*1024)).toFixed(1) + "MB) - upload may be slow. Consider a shorter clip.", "error");
-            }
+            // JUGAAD: Car ki video (2-3 min, 50-200MB, khaaskar iPhone se) ko compress karne me
+            // hi uski poori length jitna time lag sakta hai (real-time re-encode), jo "1 min ke
+            // andar" ke target se zyada hai. Isliye ab hum video ka wait hi nahi karte -
+            // 1) Text data + saari photos (jo turant compress ho jaati hain) FORAN submit ho jaati
+            //    hain - driver ko 1 min se bhi kam wait karna padta hai, kabhi bhi video ke liye
+            //    ruknā nahi padta.
+            // 2) Video background me apne aap compress + upload hoti rehti hai (driver agla trip
+            //    bhi shuru kar sakta hai), aur upload ho ke Sheet ki usi row me जुड़ जaati hai
+            //    (tripId se match karke). Agar video upload slow/fail ho jaaye, baaki sab data
+            //    already safe reh chuka hota hai - kuch bhi compulsory nahi.
+            const tripId = 'T' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
             let btn = document.getElementById('submitBtn');
             isSubmittingTrip = true;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Compressing photos...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
             Promise.all([
                 compressImageForUpload(fileStart),
                 compressImageForUpload(fileEnd),
                 compressImageForUpload(fileCarPhoto),
-                toBase64(fileCarVideo),
                 compressImageForUpload(fileDriverSelfie)
-            ]).then(([startRes, endRes, carPhotoRes, carVideoBase64, driverSelfieRes]) => {
-                // UX: photos ready ho chuki, ab actual network upload shuru ho raha hai - button
-                // text update karo taaki driver ko pata chale wo alag stage me hai (specially bada
-                // video ho to yeh step time le sakta hai)
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server...';
+            ]).then(([startRes, endRes, carPhotoRes, driverSelfieRes]) => {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server... 0%';
 
                 const formData = {
+                    tripId: tripId,
                     driverName: document.getElementById('driverName').value,
                     tripDate: document.getElementById('tripDate').value,
                     carModel: document.getElementById('carModel').value,
@@ -1116,21 +1118,32 @@
                     carPhoto: carPhotoRes.base64,
                     carPhotoName: carPhotoRes.name,
                     carPhotoType: carPhotoRes.type,
-                    carVideo: carVideoBase64,
-                    carVideoName: fileCarVideo.name,
-                    carVideoType: fileCarVideo.type,
+                    // Video is intentionally left empty here - it uploads separately in the
+                    // background (see uploadVideoInBackground below) so it never blocks/delays
+                    // the rest of the trip data.
+                    carVideo: '',
+                    carVideoName: '',
+                    carVideoType: '',
                     driverSelfie: driverSelfieRes.base64,
                     driverSelfieName: driverSelfieRes.name,
                     driverSelfieType: driverSelfieRes.type
                 };
 
-                fetch(scriptURL, {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
+                // Bade payload me ek plain fetch() kabhi kabhi beech me hi fail ho jaata hai bina
+                // wajah bataye - XHR use karte hain taaki (a) real % progress dikha sakein aur
+                // (b) ek transient failure par khud-ba-khud ek baar retry ho jaaye, driver ko
+                // dubara form bharna na pade
+                uploadWithProgressAndRetry(scriptURL, JSON.stringify(formData), (pct) => {
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Uploading to server... ' + pct + '%';
                 })
-                .then(res => res.json())
                 .then(response => {
                     showToast("Trip Details Submitted Successfully! ✅", "success");
+
+                    // Video ab background me chalti rahegi - driver ko iske liye rokna nahi hai
+                    if (fileCarVideo) {
+                        uploadVideoInBackground(fileCarVideo, tripId);
+                    }
+
                     document.getElementById('tripForm').reset();
                     document.getElementById('tripDate').valueAsDate = new Date();
                     document.getElementById('totalKm').value = "0";
@@ -1160,6 +1173,34 @@
             });
         }
 
+        // ============ BACKGROUND VIDEO UPLOAD (non-blocking) ============
+        // Trip submit ho chuka hai - ab video chup-chaap background me compress + upload hoti hai
+        // aur Sheet ki usi row me tripId se match karke jud jaati hai. Driver iske liye wait nahi
+        // karta, agla trip bhi shuru kar sakta hai. Agar yeh fail/slow ho, baaki trip data already
+        // safe hai - sirf ek chhota "video pending" toast dikhta hai, form kabhi block nahi hota.
+        function uploadVideoInBackground(fileCarVideo, tripId) {
+            showToast("Video background me upload ho rahi hai...", "success");
+            compressVideoForUpload(fileCarVideo).then((carVideoRes) => {
+                const payload = {
+                    action: 'attachVideo',
+                    tripId: tripId,
+                    carVideo: carVideoRes.base64,
+                    carVideoName: carVideoRes.name || fileCarVideo.name,
+                    carVideoType: carVideoRes.type || fileCarVideo.type
+                };
+                return uploadWithProgressAndRetry(scriptURL, JSON.stringify(payload), null);
+            }).then((response) => {
+                if (response && response.status === 'success') {
+                    showToast("Car video uploaded ✅", "success");
+                } else {
+                    showToast("Video upload me dikkat hui, baaki trip data safe hai.", "error");
+                }
+            }).catch((err) => {
+                console.error('Background video upload failed:', err);
+                showToast("Video upload nahi ho paayi, baaki trip data safe hai.", "error");
+            });
+        }
+
         function toBase64(file) {
             return new Promise((resolve, reject) => {
                 if (!file) { resolve(''); return; }
@@ -1172,6 +1213,180 @@
 
         function toJpgName(name) {
             return (name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+        }
+
+        function toWebmName(name) {
+            return (name || 'car-video').replace(/\.[^.]+$/, '') + '.webm';
+        }
+
+        // ============ VIDEO COMPRESSION (client-side, before upload) ============
+        // Phone camera se video 84MB se 200MB+ tak badi ho sakti hai. Poori video ko base64 karke
+        // seedha bhej dena bahut slow hai (33% extra size + poora file memory me + slow network).
+        // Isliye yahan video ko upload se PEHLE hi browser ke andar khud chhota kar dete hain:
+        // sirf resolution/bitrate ghatate hain (480p, low bitrate WebM) - FULL video, POORI length,
+        // NORMAL speed par (koi frame skip/fast-forward nahi), taaki maalik ko poora clip clearly,
+        // sahi speed par dikhe. Isse 84-200MB video aksar 3-15MB tak aa jaati hai bina content ya
+        // duration change kiye. Agar browser/device compression support nahi karta (purana Safari/
+        // Android WebView), toh chup-chaap poori original video hi bhej dete hain - kabhi bhi
+        // upload fail/error nahi hona chahiye, aur video kabhi trim/cut nahi hoti.
+        function compressVideoForUpload(file) {
+            const SKIP_THRESHOLD = 12 * 1024 * 1024; // 12MB se chhoti video already fast hai, chhedo mat
+
+            const sendOriginal = () => toBase64(file).then(b64 => resolve({ base64: b64, type: file.type, name: file.name }));
+            let resolve; // closure ke liye, neeche asli Promise banate waqt set hoga
+
+            return new Promise((res) => {
+                resolve = res;
+                if (!file) { resolve({ base64: '', type: '', name: '' }); return; }
+                if (!file.type || !file.type.startsWith('video/')) { sendOriginal(); return; }
+                if (file.size < SKIP_THRESHOLD) { sendOriginal(); return; }
+
+                const canCompress = typeof MediaRecorder !== 'undefined' &&
+                    typeof HTMLVideoElement !== 'undefined' &&
+                    typeof HTMLVideoElement.prototype.captureStream === 'function';
+                if (!canCompress) { sendOriginal(); return; }
+
+                // Size jitni zyada, utna hi zyada squeeze karo (resolution/bitrate) - quality thodi
+                // kam hoti hai par saaf dikhti hai, aur poora clip poori length/speed par hi rehta hai
+                let maxHeight = 480, bitrate = 1200000;
+                if (file.size > 150 * 1024 * 1024) { maxHeight = 420; bitrate = 800000; }
+                else if (file.size > 80 * 1024 * 1024) { maxHeight = 480, bitrate = 950000; }
+
+                const objectUrl = URL.createObjectURL(file);
+                const video = document.createElement('video');
+                video.muted = true; // recording ke liye muted playback bhi chalta hai, autoplay-safe rehta hai
+                video.playsInline = true;
+                video.preload = 'auto';
+                video.src = objectUrl;
+
+                let settled = false;
+                const finish = (result) => {
+                    if (settled) return;
+                    settled = true;
+                    try { URL.revokeObjectURL(objectUrl); } catch (e) {}
+                    resolve(result);
+                };
+                const fallback = () => { toBase64(file).then(b64 => finish({ base64: b64, type: file.type, name: file.name })); };
+
+                // Safety net #1: agar video load hi na ho paaye (corrupt/unsupported), 15 sec me original bhej do
+                let safetyTimeout = setTimeout(fallback, 15000);
+
+                video.onerror = () => { clearTimeout(safetyTimeout); fallback(); };
+
+                video.onloadedmetadata = () => {
+                    try {
+                        let vw = video.videoWidth, vh = video.videoHeight;
+                        if (!vw || !vh) throw new Error('no video dimensions');
+
+                        let scale = Math.min(1, maxHeight / vh);
+                        let outW = Math.max(2, Math.round(vw * scale / 2) * 2);
+                        let outH = Math.max(2, Math.round(vh * scale / 2) * 2);
+
+                        // Video NORMAL speed (1x) par hi capture hoti hai taaki poora content, sahi
+                        // speed par record ho. Isliye transcode ka time roughly clip ki apni length
+                        // jitna hi lagta hai - safety timeout bhi usi hisaab se set karte hain
+                        // (varna lambi clip beech me hi "stuck" maan ke original bhej dega, jo aur
+                        // slow hoga).
+                        clearTimeout(safetyTimeout);
+                        let duration = isFinite(video.duration) && video.duration > 0 ? video.duration : 20;
+                        safetyTimeout = setTimeout(fallback, Math.min(240000, Math.max(30000, (duration + 12) * 1000)));
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = outW; canvas.height = outH;
+                        const ctx = canvas.getContext('2d');
+                        const canvasStream = canvas.captureStream(30);
+
+                        // Original clip ka audio bhi (agar hai) canvas stream ke saath jod dete hain
+                        try {
+                            const srcStream = video.captureStream();
+                            srcStream.getAudioTracks().forEach(t => canvasStream.addTrack(t));
+                        } catch (e) {}
+
+                        const mimeCandidates = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp8', 'video/webm'];
+                        const chosenMime = mimeCandidates.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+                        let recorder;
+                        try {
+                            recorder = new MediaRecorder(canvasStream, { mimeType: chosenMime, videoBitsPerSecond: bitrate });
+                        } catch (e) { clearTimeout(safetyTimeout); fallback(); return; }
+
+                        const chunks = [];
+                        recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+
+                        let drawHandle = null;
+                        const drawFrame = () => {
+                            if (video.paused || video.ended || settled) return;
+                            try { ctx.drawImage(video, 0, 0, outW, outH); } catch (e) {}
+                            drawHandle = requestAnimationFrame(drawFrame);
+                        };
+
+                        const stopAndFinalize = () => {
+                            if (drawHandle) cancelAnimationFrame(drawHandle);
+                            if (recorder.state !== 'inactive') { try { recorder.stop(); } catch (e) {} }
+                        };
+
+                        recorder.onstop = () => {
+                            clearTimeout(safetyTimeout);
+                            if (settled) return;
+                            if (!chunks.length) { fallback(); return; }
+                            const blob = new Blob(chunks, { type: chosenMime });
+                            // agar compress karne ke baad bhi koi fayda nahi (bahut chhoti bachi), original bhej do
+                            if (blob.size >= file.size * 0.9) { fallback(); return; }
+                            const reader = new FileReader();
+                            reader.onload = () => finish({ base64: reader.result.split(',')[1], type: chosenMime, name: toWebmName(file.name) });
+                            reader.onerror = fallback;
+                            reader.readAsDataURL(blob);
+                        };
+
+                        video.onended = stopAndFinalize;
+                        video.onpause = () => { if (video.ended || settled) stopAndFinalize(); };
+
+                        recorder.start(250);
+                        video.currentTime = 0;
+                        video.play().then(drawFrame).catch(() => { clearTimeout(safetyTimeout); fallback(); });
+                    } catch (e) {
+                        clearTimeout(safetyTimeout);
+                        fallback();
+                    }
+                };
+            });
+        }
+
+        // ============ UPLOAD WITH PROGRESS + AUTO-RETRY ============
+        // fetch() se upload progress % nahi mil sakta aur bade payload me kabhi kabhi ek silent
+        // network glitch se poora submit fail ho jaata hai. XMLHttpRequest se dono theek hote hain:
+        // real % dikhta hai, aur pehla attempt fail ho toh ek baar khud-ba-khud retry ho jaata hai.
+        function xhrPost(url, body, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+                xhr.timeout = 90000; // safety cap - request hamesha ke liye latakni nahi chahiye
+                if (xhr.upload && onProgress) {
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100)));
+                    };
+                }
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        onProgress && onProgress(100);
+                        try { resolve(JSON.parse(xhr.responseText)); }
+                        catch (e) { resolve(xhr.responseText); }
+                    } else {
+                        reject(new Error('HTTP ' + xhr.status));
+                    }
+                };
+                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.ontimeout = () => reject(new Error('Timeout'));
+                xhr.send(body);
+            });
+        }
+
+        function uploadWithProgressAndRetry(url, body, onProgress) {
+            return xhrPost(url, body, onProgress).catch((err) => {
+                console.warn('Upload attempt 1 failed, retrying once...', err);
+                onProgress && onProgress(0);
+                return xhrPost(url, body, onProgress);
+            });
         }
 
         // Phone camera se photo aksar 3-8MB tak badi aati hai - usse seedha base64 karke bhejne se
