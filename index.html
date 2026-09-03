@@ -221,19 +221,22 @@
         /* ============ VIDEO STATUS POPUP (persistent - stays until driver taps OK) ============ */
         /* Toast 3.5 sec me gayab ho jaata hai - lambi video background me 2-3 min baad complete
            hoti hai, tab tak driver phone kahin aur use kar raha ho sakta hai aur toast miss ho
-           sakta hai. Ye popup tab tak screen par rehta hai jab tak driver khud OK na daba de. */
-        #videoStatusModal {
+           sakta hai. Ye popup tab tak screen par rehta hai jab tak driver khud OK na daba de.
+           NOTE: #dataSubmittedModal (Phase 1 popup, HTML thodi der neeche) bhi isi
+           .video-status-box style ko reuse karta hai - dono ek hi tarah ke "persistent
+           confirmation" popup hain, bas alag-alag trigger point par dikhte hain. */
+        #videoStatusModal, #dataSubmittedModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0); display: none; justify-content: center; align-items: center; z-index: 1000;
             transition: background 0.35s var(--ease);
         }
-        #videoStatusModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(var(--blur-modal)); -webkit-backdrop-filter: blur(var(--blur-modal)); }
+        #videoStatusModal.open, #dataSubmittedModal.open { background: rgba(0,0,0,0.45); backdrop-filter: blur(var(--blur-modal)); -webkit-backdrop-filter: blur(var(--blur-modal)); }
         .video-status-box {
             background: var(--surface-solid); padding: 36px 32px; border-radius: 26px; width: 380px; max-width: 88vw; text-align: center;
             box-shadow: var(--shadow-lg); border: 1px solid var(--border);
             transform: scale(0.85) translateY(20px); opacity: 0; transition: transform 0.4s var(--spring), opacity 0.3s var(--ease);
         }
-        #videoStatusModal.open .video-status-box { transform: scale(1) translateY(0); opacity: 1; }
+        #videoStatusModal.open .video-status-box, #dataSubmittedModal.open .video-status-box { transform: scale(1) translateY(0); opacity: 1; }
         .video-status-box i.status-icon { font-size: 44px; margin-bottom: 14px; }
         .video-status-box i.status-icon.ok { color: var(--accent-2); }
         .video-status-box i.status-icon.fail { color: var(--danger); }
@@ -472,7 +475,7 @@
 
         @media print {
             body { background: white; padding: 0; color: black; }
-            .top-nav, #loginModal, #videoStatusModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav, #bottomNav, #bottomSheetOverlay, #tripCardsList { display: none !important; }
+            .top-nav, #loginModal, #videoStatusModal, #dataSubmittedModal, .filter-box, header .header-actions, .analytics-grid, #toastContainer, .tabs-nav, #bottomNav, #bottomSheetOverlay, #tripCardsList { display: none !important; }
             #dashboardSection { display: block !important; max-width: 100% !important; margin: 0; padding: 0; }
             header { box-shadow: none; border-bottom: 3px solid #0f172a; padding: 15px 0; margin-bottom: 20px; }
             header h2::before { content: "CORPORATE EXPENSE & TRIP INVOICE STATEMENT\A"; font-size: 12px; color: #64748b; display: block; font-weight: normal; }
@@ -759,6 +762,16 @@
         </div>
     </div>
 
+    <!-- PHASE 1 POPUP - trip data (text + photos) submit hote hi turant dikhta hai, video ka
+         wait nahi karta. Isi #videoStatusModal wale styling system ko reuse karta hai. -->
+    <div id="dataSubmittedModal">
+        <div class="video-status-box">
+            <i class="fa-solid fa-circle-check status-icon ok"></i>
+            <p id="dataSubmittedMsg">✅Data has been submitted.</p>
+            <button onclick="closeDataSubmittedModal()">OK</button>
+        </div>
+    </div>
+
     <!-- ENTERPRISE ADMIN DASHBOARD SECTION -->
 <div id="dashboardSection">
     <div id="pullToRefreshIndicator"><i class="fa-solid fa-arrows-rotate"></i></div>
@@ -1021,7 +1034,8 @@
         // video 2-3 min baad complete ho toh bhi driver miss na kare.
         function openVideoStatusModal(success, message) {
             document.getElementById('videoStatusIcon').className = 'fa-solid status-icon ' + (success ? 'ok fa-circle-check' : 'fail fa-circle-exclamation');
-            document.getElementById('videoStatusTitle').innerText = success ? 'Video Uploaded ✅' : 'Video Upload Failed';
+            // Success par title khaali rakhte hain taaki sirf exact required text hi popup me dikhe
+            document.getElementById('videoStatusTitle').innerText = success ? '' : 'Video Upload Failed';
             document.getElementById('videoStatusMsg').innerText = message;
             let m = document.getElementById('videoStatusModal');
             m.style.display = 'flex';
@@ -1029,6 +1043,20 @@
         }
         function closeVideoStatusModal() {
             let m = document.getElementById('videoStatusModal');
+            m.classList.remove('open');
+            setTimeout(() => { m.style.display = 'none'; }, 300);
+        }
+
+        // PHASE 1 popup - trip data (text + photos) submit hote hi turant dikhta hai. Non-
+        // blocking hai: video (agar select ki gayi ho) isi ke saath background me upload hona
+        // shuru ho jaati hai - driver ke OK dabane ka wait nahi karta.
+        function openDataSubmittedModal() {
+            let m = document.getElementById('dataSubmittedModal');
+            m.style.display = 'flex';
+            requestAnimationFrame(() => m.classList.add('open'));
+        }
+        function closeDataSubmittedModal() {
+            let m = document.getElementById('dataSubmittedModal');
             m.classList.remove('open');
             setTimeout(() => { m.style.display = 'none'; }, 300);
         }
@@ -1171,12 +1199,11 @@
                     carPhoto: carPhotoRes.base64,
                     carPhotoName: carPhotoRes.name,
                     carPhotoType: carPhotoRes.type,
-                    // Video is intentionally left empty here - it uploads separately in the
-                    // background (see uploadVideoInBackground below) so it never blocks/delays
-                    // the rest of the trip data.
-                    carVideo: '',
-                    carVideoName: '',
-                    carVideoType: '',
+                    // Video ka base64 yahan bilkul nahi bhejte - woh Phase 2 me seedha browser
+                    // se Google Drive API par (Direct Resumable Upload) jaati hai, Apps Script
+                    // ko touch kiye bina. hasVideo flag se backend ko sirf itna pata chalta hai
+                    // ki placeholder cell ("⏳ Video Uploading...") lagana hai ya nahi.
+                    hasVideo: !!fileCarVideo,
                     driverSelfie: driverSelfieRes.base64,
                     driverSelfieName: driverSelfieRes.name,
                     driverSelfieType: driverSelfieRes.type
@@ -1190,11 +1217,20 @@
                 // isse poora submit CORS error se block ho jaata hai. Retry abhi bhi kaam karta hai.
                 uploadWithProgressAndRetry(scriptURL, JSON.stringify(formData), null)
                 .then(response => {
-                    showToast("Trip Details Submitted Successfully! ✅", "success");
+                    if (!response || response.status !== 'success') {
+                        throw new Error((response && response.message) || 'Submit failed');
+                    }
 
-                    // Video ab background me chalti rahegi - driver ko iske liye rokna nahi hai
+                    // PHASE 1 complete: text + photos safely Sheet me save ho chuki hain.
+                    openDataSubmittedModal();
+
+                    // PHASE 2: video ab background me seedha Google Drive par (Direct
+                    // Resumable Upload API se) upload hoti rahegi - driver ko iske liye
+                    // rokna nahi hai, agla trip bhi turant shuru kar sakta hai. rowIndex
+                    // GAS ne Phase 1 me hi wapas bheja tha - isi row ki Car Video Link cell
+                    // Phase 2 complete hone par update hogi.
                     if (fileCarVideo) {
-                        uploadVideoInBackground(fileCarVideo, tripId);
+                        uploadVideoInBackground(fileCarVideo, tripId, response.rowIndex);
                     }
 
                     document.getElementById('tripForm').reset();
@@ -1226,82 +1262,156 @@
             });
         }
 
-        // ============ BACKGROUND VIDEO UPLOAD (non-blocking, CHUNKED) ============
-        // Trip submit ho chuka hai - ab video chup-chaap background me compress + upload hoti hai
-        // aur Sheet ki usi row me tripId se match karke jud jaati hai. Driver iske liye wait nahi
-        // karta, agla trip bhi shuru kar sakta hai. Agar yeh fail/slow ho, baaki trip data already
-        // safe hai - sirf ek chhota "video pending" toast dikhta hai, form kabhi block nahi hota.
+        // ============ BACKGROUND VIDEO UPLOAD (non-blocking, DIRECT RESUMABLE UPLOAD) ============
+        // Trip (Phase 1) submit ho chuka hai - ab video chup-chaap background me compress hoti
+        // hai aur SEEDHA Google Drive API par (Apps Script ko bilkul touch kiye bina) resumable
+        // upload hoti hai. Driver iske liye wait nahi karta, agla trip bhi shuru kar sakta hai.
+        // Agar yeh fail/slow ho, baaki trip data already safe hai (Phase 1 me hi save ho chuka
+        // tha) - form kabhi block nahi hota.
         //
-        // ROOT FIX: pehle poori video (ya agar iPhone/Safari compress na kar paaye toh poora
-        // 50-200MB ORIGINAL) ek hi HTTP request me jaati thi - isliye badi video hamesha fail
-        // hoti thi (single request timeout, mobile network glitch, ya bas itna bada payload
-        // Apps Script/network ke liye practical nahi tha). Ab video ko chhote (~3.5MB) chunks me
-        // todkar ek-ek karke bheja jaata hai - agar koi ek chunk fail ho, sirf wahi chunk retry
-        // hota hai, poori video dobara nahi bhejni padti. Backend (Code.gs) sab chunks ko jodkar
-        // final video banata hai - isse quality ya length me koi farak nahi padta, sirf reliability
-        // badhti hai. Yeh iPhone (jahan compression chalti hi nahi) aur Android dono par kaam
-        // karta hai.
-        const VIDEO_CHUNK_SIZE = 3.5 * 1024 * 1024; // 3.5MB raw per chunk (~4.7MB base64 ke baad) - kisi bhi mobile network par ek chunk chhoti/fast rehti hai
+        // ROOT FIX: pehle poori video Apps Script ke doPost() ko (base64 chunks me hi sahi)
+        // bhejni padti thi, jiska 50MB/request payload limit hai. Ab video Apps Script ko chhuti
+        // hi nahi - browser seedha Google Drive ke Resumable Upload API (uploadType=resumable)
+        // ko OAuth token ke saath call karta hai, jo 200MB+ files ke liye bana hi isi kaam ke
+        // liye hai: bade chunks (8MB), network glitch par bhi wahi se resume, aur koi Apps
+        // Script payload limit nahi. Video upload complete hote hi bas ek chhota "updateVideoUrl"
+        // call GAS ko jaata hai (sirf fileId + rowIndex, kuch KB ka), jo Car Video Link cell
+        // update kar deta hai.
+        const DRIVE_UPLOAD_CHUNK_SIZE = 8 * 1024 * 1024; // 8MB - Google ki requirement ke mutabik 256KB ka exact multiple
 
-        function blobChunkToBase64(blob) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
+        // GAS se ek short-lived OAuth access token mangta hai - script jitna Drive access
+        // already rakhta hai (DriveApp wagera), usi scope ka token milta hai. Har video upload
+        // shuru karne se pehle FRESH token liya jaata hai taaki beech me expire hone ka risk
+        // kam se kam ho.
+        function getUploadToken() {
+            return uploadWithProgressAndRetry(scriptURL, JSON.stringify({ action: 'getUploadToken' }), null, { timeoutMs: 30000, retries: 2 })
+                .then((res) => {
+                    if (!res || res.status !== 'success' || !res.token) {
+                        throw new Error((res && res.message) || 'Could not get upload token');
+                    }
+                    return res.token;
+                });
+        }
+
+        // Drive par ek naya resumable upload "session" shuru karta hai. Success par Drive ek
+        // Location header deta hai - yahi session URL hai jahan asli video ke bytes PUT honge.
+        function initResumableDriveSession(token, fileName, mimeType, fileSize) {
+            return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json; charset=UTF-8',
+                    'X-Upload-Content-Type': mimeType || 'video/mp4',
+                    'X-Upload-Content-Length': String(fileSize)
+                },
+                // parents: ['root'] => Drive ki root folder me hi banti hai, bilkul
+                // uploadFileToDrive_ (images) jaisa hi jagah
+                body: JSON.stringify({ name: fileName, mimeType: mimeType || 'video/mp4', parents: ['root'] })
+            }).then((res) => {
+                if (!res.ok) throw new Error('Failed to start resumable session (HTTP ' + res.status + ')');
+                const location = res.headers.get('Location') || res.headers.get('location');
+                if (!location) throw new Error('No resumable session URL returned by Drive');
+                return location;
             });
         }
 
-        // Blob ko chhote slices me todkar ek-ek karke sequentially upload karta hai. Har chunk
-        // apne aap me chhota hai (~3.5MB), isliye har chunk ka apna 2-min timeout + 3 retry kaafi
-        // hai. Sirf AAKHRI chunk ke saath fileName/fileType bhejte hain - backend usi signal se
-        // samajhta hai ki ab saare chunks jod kar final video banani hai.
-        function uploadBlobInChunks(blob, tripId, fileName, fileType) {
-            const totalChunks = Math.max(1, Math.ceil(blob.size / VIDEO_CHUNK_SIZE));
+        // Agar koi chunk beech me hi fail ho jaaye (network glitch), Drive se pucha ja sakta hai
+        // ki usne actually kitne bytes tak receive kiya - taaki wahin se aage resume ho, poori
+        // video dobara na bhejni pade.
+        function queryResumableOffset(sessionUrl, totalSize) {
+            return fetch(sessionUrl, {
+                method: 'PUT',
+                headers: { 'Content-Range': 'bytes */' + totalSize }
+            }).then((res) => {
+                if (res.status === 200 || res.status === 201) return totalSize; // already fully upload ho chuki thi
+                if (res.status === 308) {
+                    const range = res.headers.get('Range');
+                    if (range) {
+                        const match = /(\d+)-(\d+)/.exec(range);
+                        if (match) return parseInt(match[2], 10) + 1;
+                    }
+                    return 0; // koi Range header nahi mila matlab abhi tak kuch bhi receive nahi hua
+                }
+                return 0;
+            }).catch(() => 0);
+        }
 
-            function sendChunk(index) {
-                const start = index * VIDEO_CHUNK_SIZE;
-                const end = Math.min(blob.size, start + VIDEO_CHUNK_SIZE);
+        // Video ko 8MB ke chunks me todkar, ek-ek karke Drive ke resumable session URL par PUT
+        // karta hai. Har chunk fail hone par (network error ya koi bhi non-308/200/201 status)
+        // usi chunk ko exponential backoff ke saath dobara try karta hai - agar retries bhi khatam
+        // ho jaayein, ek baar Drive se current offset pucha jaata hai (queryResumableOffset) aur
+        // wahin se aage badha jaata hai, taaki koi bhi progress waste na ho.
+        function uploadToResumableSession(sessionUrl, blob, token, onProgress) {
+            const totalSize = blob.size;
+
+            function putChunk(start, attempt) {
+                const end = Math.min(start + DRIVE_UPLOAD_CHUNK_SIZE, totalSize);
                 const slice = blob.slice(start, end);
-                const isLast = (index + 1 >= totalChunks);
 
-                return blobChunkToBase64(slice).then((b64) => {
-                    const payload = {
-                        action: 'attachVideoChunk',
-                        tripId: tripId,
-                        uploadId: tripId, // ek trip ki ek hi video hoti hai, tripId hi upload ID ke liye kaafi hai
-                        chunkIndex: index,
-                        totalChunks: totalChunks,
-                        data: b64
-                    };
-                    if (isLast) {
-                        payload.fileName = fileName;
-                        payload.fileType = fileType;
+                return fetch(sessionUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Length': String(end - start),
+                        'Content-Range': 'bytes ' + start + '-' + (end - 1) + '/' + totalSize
+                    },
+                    body: slice
+                }).then((res) => {
+                    if (res.status === 200 || res.status === 201) {
+                        return res.json(); // aakhri chunk - Drive ne final file metadata (id, etc.) wapas bheja
                     }
-                    return uploadWithProgressAndRetry(scriptURL, JSON.stringify(payload), null, { timeoutMs: 120000, retries: 3 });
-                }).then((response) => {
-                    if (!response || response.status !== 'success') {
-                        throw new Error((response && response.message) || ('Chunk ' + index + ' upload failed'));
+                    if (res.status === 308) {
+                        onProgress && onProgress(Math.min(99, Math.round((end / totalSize) * 100)));
+                        return putChunk(end, 0);
                     }
-                    if (!isLast) {
-                        return sendChunk(index + 1);
-                    }
-                    return response;
+                    throw new Error('Upload chunk failed (HTTP ' + res.status + ')');
+                }).catch((err) => {
+                    if (attempt >= 4) throw err; // 4 retries ke baad bhi fail toh poora upload hi fail maano
+                    const delay = Math.min(15000, 1500 * Math.pow(2, attempt));
+                    return new Promise((resolve) => setTimeout(resolve, delay)).then(() => {
+                        return queryResumableOffset(sessionUrl, totalSize).then((resumeFrom) => {
+                            return putChunk(resumeFrom, attempt + 1);
+                        });
+                    });
                 });
             }
 
-            return sendChunk(0);
+            return putChunk(0, 0);
         }
 
-        function uploadVideoInBackground(fileCarVideo, tripId) {
+        // Poora Phase 2 flow: token lo -> session shuru karo -> chunks upload karo -> fileId milo.
+        function uploadVideoDirectToDrive(blob, fileName, mimeType) {
+            return getUploadToken().then((token) => {
+                return initResumableDriveSession(token, fileName, mimeType, blob.size).then((sessionUrl) => {
+                    return uploadToResumableSession(sessionUrl, blob, token);
+                });
+            }).then((fileMeta) => {
+                if (!fileMeta || !fileMeta.id) throw new Error('Drive upload did not return a file id');
+                return fileMeta.id;
+            });
+        }
+
+        function uploadVideoInBackground(fileCarVideo, tripId, rowIndex) {
             showToast("Video background me upload ho rahi hai...", "success");
             compressVideoForUpload(fileCarVideo).then((res) => {
                 const blob = res.blob || fileCarVideo;
                 const name = res.name || fileCarVideo.name;
                 const type = res.type || fileCarVideo.type;
-                return uploadBlobInChunks(blob, tripId, name, type);
-            }).then(() => {
-                openVideoStatusModal(true, "Car video safely sheet me upload ho chuki hai.");
+                return uploadVideoDirectToDrive(blob, name, type);
+            }).then((fileId) => {
+                // Video Drive par ja chuki hai - ab sirf GAS ko sharing set karke sahi row
+                // update karne ke liye batana hai (chhota, fast call - koi bada payload nahi)
+                return uploadWithProgressAndRetry(scriptURL, JSON.stringify({
+                    action: 'updateVideoUrl',
+                    rowIndex: rowIndex,
+                    tripId: tripId,
+                    fileId: fileId
+                }), null, { timeoutMs: 30000, retries: 2 });
+            }).then((response) => {
+                if (!response || response.status !== 'success') {
+                    throw new Error((response && response.message) || 'Could not link uploaded video to the trip row');
+                }
+                openVideoStatusModal(true, "Video has been uploaded successfully");
             }).catch((err) => {
                 console.error('Background video upload failed:', err);
                 openVideoStatusModal(false, "Baaki trip data safe hai, lekin video upload nahi ho paayi. Dobara try karein ya admin ko bata dein.");
