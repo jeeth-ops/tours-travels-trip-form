@@ -1234,6 +1234,12 @@
         function uploadVideoInBackground(fileCarVideo, tripId) {
             showToast("Video background me upload ho rahi hai...", "success");
             compressVideoForUpload(fileCarVideo).then((carVideoRes) => {
+                // Video compress nahi ho paayi AUR original bhi upload ke liye bahot badi hai -
+                // isse blindly try karna guaranteed fail hota, isliye seedha saaf message de dete hain
+                if (carVideoRes.error === 'TOO_LARGE_TO_UPLOAD') {
+                    openVideoStatusModal(false, "Baaki trip data safe hai, lekin yeh video is device/browser par compress nahi ho paayi aur size ki wajah se upload ke liye bahot badi hai. Please dobara try karein (achhi internet/WiFi par) ya thodi chhoti/kam length ki video record karein.");
+                    return null;
+                }
                 const payload = {
                     action: 'attachVideo',
                     tripId: tripId,
@@ -1243,6 +1249,7 @@
                 };
                 return uploadWithProgressAndRetry(scriptURL, JSON.stringify(payload), null);
             }).then((response) => {
+                if (!response) return; // upar wale too-large case me yahan kuch nahi karna, message already dikha chuke hain
                 if (response && response.status === 'success') {
                     openVideoStatusModal(true, "Car video safely sheet me upload ho chuki hai.");
                 } else {
@@ -1284,8 +1291,16 @@
         // upload fail/error nahi hona chahiye, aur video kabhi trim/cut nahi hoti.
         function compressVideoForUpload(file) {
             const SKIP_THRESHOLD = 12 * 1024 * 1024; // 12MB se chhoti video already fast hai, chhedo mat
+            const MAX_SAFE_RAW_SEND = 20 * 1024 * 1024; // isse zyada RAW file kabhi bhi mat bhejo - guaranteed fail/hang hoga
+            const TARGET_OUTPUT_BYTES = 18 * 1024 * 1024; // compression ka goal: video chahe 1 min ki ho ya 20 min, output ~18MB ke aas-paas hi rakho
 
             const sendOriginal = () => toBase64(file).then(b64 => resolve({ base64: b64, type: file.type, name: file.name }));
+            // Agar compression fail ho jaaye ya browser support hi na kare: original chhoti hai toh
+            // usko hi bhej do (safe, fast). Lekin agar original BADI hai, toh use KABHI mat bhejo -
+            // itni badi file network par jaana almost hamesha fail hota hai. Uske bajaye ek saaf
+            // error de dete hain taaki driver ko turant pata chale (chup-chaap ek doomed upload try
+            // karne se yeh kahin behtar hai).
+            const rejectTooLarge = () => resolve({ error: 'TOO_LARGE_TO_UPLOAD', base64: '', type: file.type, name: file.name });
             let resolve; // closure ke liye, neeche asli Promise banate waqt set hoga
 
             return new Promise((res) => {
@@ -1297,13 +1312,7 @@
                 const canCompress = typeof MediaRecorder !== 'undefined' &&
                     typeof HTMLVideoElement !== 'undefined' &&
                     typeof HTMLVideoElement.prototype.captureStream === 'function';
-                if (!canCompress) { sendOriginal(); return; }
-
-                // Size jitni zyada, utna hi zyada squeeze karo (resolution/bitrate) - quality thodi
-                // kam hoti hai par saaf dikhti hai, aur poora clip poori length/speed par hi rehta hai
-                let maxHeight = 480, bitrate = 1200000;
-                if (file.size > 150 * 1024 * 1024) { maxHeight = 420; bitrate = 800000; }
-                else if (file.size > 80 * 1024 * 1024) { maxHeight = 480, bitrate = 950000; }
+                if (!canCompress) { (file.size <= MAX_SAFE_RAW_SEND) ? sendOriginal() : rejectTooLarge(); return; }
 
                 const objectUrl = URL.createObjectURL(file);
                 const video = document.createElement('video');
@@ -1319,9 +1328,16 @@
                     try { URL.revokeObjectURL(objectUrl); } catch (e) {}
                     resolve(result);
                 };
-                const fallback = () => { toBase64(file).then(b64 => finish({ base64: b64, type: file.type, name: file.name })); };
+                // Yeh ab UNIVERSALLY SAFE hai - chahe kahin se bhi (safety-timeout, video-error,
+                // recorder-error) call ho, badi original file KABHI raw nahi bhejta. Chhoti file ho
+                // toh original bhej do (safe/fast), badi ho toh saaf error de do - silently ek
+                // guaranteed-fail huge upload try karne se yeh kahin behtar hai.
+                const fallback = () => {
+                    if (file.size <= MAX_SAFE_RAW_SEND) toBase64(file).then(b64 => finish({ base64: b64, type: file.type, name: file.name }));
+                    else finish({ error: 'TOO_LARGE_TO_UPLOAD', base64: '', type: file.type, name: file.name });
+                };
 
-                // Safety net #1: agar video load hi na ho paaye (corrupt/unsupported), 15 sec me original bhej do
+                // Safety net #1: agar video load hi na ho paaye (corrupt/unsupported), 15 sec me fallback
                 let safetyTimeout = setTimeout(fallback, 15000);
 
                 video.onerror = () => { clearTimeout(safetyTimeout); fallback(); };
@@ -1331,20 +1347,36 @@
                         let vw = video.videoWidth, vh = video.videoHeight;
                         if (!vw || !vh) throw new Error('no video dimensions');
 
-                        let scale = Math.min(1, maxHeight / vh);
-                        let outW = Math.max(2, Math.round(vw * scale / 2) * 2);
-                        let outH = Math.max(2, Math.round(vh * scale / 2) * 2);
-
                         // Video NORMAL speed (1x) par hi capture hoti hai taaki poora content, sahi
                         // speed par record ho. Isliye transcode ka time roughly clip ki apni length
                         // jitna hi lagta hai - safety timeout bhi usi hisaab se set karte hain
-                        // (varna lambi clip beech me hi "stuck" maan ke original bhej dega, jo aur
-                        // slow hoga). Cap ab zyada generous hai (10 min) kyunki agar tab background
-                        // me chala jaaye (driver dusra tab use karne lage), browser processing ko
-                        // throttle kar sakta hai - isse process expected se zyada time le sakta hai.
+                        // (varna lambi clip beech me hi "stuck" maan ke fallback kar dega). Cap ab
+                        // zyada generous hai (10 min) kyunki agar tab background me chala jaaye
+                        // (driver dusra tab use karne lage), browser processing ko throttle kar
+                        // sakta hai - isse process expected se zyada time le sakta hai.
                         clearTimeout(safetyTimeout);
                         let duration = isFinite(video.duration) && video.duration > 0 ? video.duration : 20;
                         safetyTimeout = setTimeout(fallback, Math.min(600000, Math.max(30000, (duration + 12) * 1000 * 3)));
+
+                        // Bitrate video ki LENGTH ke hisaab se khud-ba-khud decide karte hain, taaki
+                        // final output size hamesha ~18MB ke aas-paas rahe - chahe video 1 min ki ho
+                        // ya 20 min ki. Isse LAMBI video bhi jaldi upload hoti hai, poori length ke
+                        // saath. Chhoti clips ke liye bitrate ek achhi quality ceiling (1.2Mbps) tak
+                        // capped hai; bahot lambi clips ke liye bhi ek minimum floor (200kbps) hai
+                        // (varna dikhna hi band ho jaayega) - is floor ki wajah se sirf bahot lambi
+                        // (30 min+) video ka size target se thoda zyada ho sakta hai, jo phir bhi
+                        // original raw file se kaafi kaafi chhota hi rahega.
+                        const AUDIO_BITRATE = 64000;
+                        let bitrate = Math.round((TARGET_OUTPUT_BYTES * 8 * 0.85) / duration - AUDIO_BITRATE);
+                        bitrate = Math.max(200000, Math.min(1200000, bitrate));
+
+                        let maxHeight = 480;
+                        if (bitrate < 500000) maxHeight = 360;
+                        else if (bitrate < 900000) maxHeight = 420;
+
+                        let scale = Math.min(1, maxHeight / vh);
+                        let outW = Math.max(2, Math.round(vw * scale / 2) * 2);
+                        let outH = Math.max(2, Math.round(vh * scale / 2) * 2);
 
                         const canvas = document.createElement('canvas');
                         canvas.width = outW; canvas.height = outH;
@@ -1398,8 +1430,12 @@
                             if (settled) return;
                             if (!chunks.length) { fallback(); return; }
                             const blob = new Blob(chunks, { type: chosenMime });
-                            // agar compress karne ke baad bhi koi fayda nahi (bahut chhoti bachi), original bhej do
-                            if (blob.size >= file.size * 0.9) { fallback(); return; }
+                            // Bitrate ab target-size ke hisaab se hi decide hota hai, isliye compressed
+                            // file normally hamesha chhoti hi aati hai. SIRF tab original ki taraf
+                            // jao jab compressed result asal me original se BADI ya barabar ho -
+                            // aur woh bhi fallback() se hi (jo khud size-safe hai, kabhi bhi badi
+                            // raw file blindly nahi bhejega).
+                            if (blob.size >= file.size) { fallback(); return; }
                             const reader = new FileReader();
                             reader.onload = () => finish({ base64: reader.result.split(',')[1], type: chosenMime, name: toWebmName(file.name) });
                             reader.onerror = fallback;
