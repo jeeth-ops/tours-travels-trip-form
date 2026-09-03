@@ -1497,27 +1497,54 @@
         function uploadToResumableSession(sessionUrl, blob, token, onProgress, startOffset) {
             const totalSize = blob.size;
 
+            // Chunk ke bytes ab XHR se PUT karte hain, fetch() se nahi. WAJAH: fetch() ka
+            // response tabhi milta hai jab POORA chunk network par chala jaaye - beech me
+            // koi progress event hi nahi milta, isliye chhoti video (jo generally is 8MB
+            // wale ek chunk se bhi choti hoti hai) me % 0 par atka rehta hai aur upload
+            // complete hote hi seedha 100% pe jump karta hai.
+            // XHR ka xhr.upload.onprogress chunk ke ANDAR bhi baar-baar (real bytes-sent
+            // ke hisaab se) fire hota hai, isliye progress ab smoothly badhega.
+            // NOTE: yeh us CORS-preflight wali dikkat se bilkul alag hai (jo xhrPost/Apps
+            // Script wale upload me comment ki gayi hai) - woh sirf script.google.com
+            // (Apps Script, jo preflight OPTIONS ka jawab nahi de sakta) ke liye thi.
+            // Yeh request seedha Google Drive API (googleapis.com) ko jaata hai, jiska
+            // resumable upload endpoint bade files + real progress tracking ke liye hi
+            // banaya gaya hai aur upload.onprogress listener ke saath CORS preflight ko
+            // bilkul theek se handle karta hai.
             function putChunk(start, attempt) {
                 const end = Math.min(start + DRIVE_UPLOAD_CHUNK_SIZE, totalSize);
                 const slice = blob.slice(start, end);
 
-                return fetch(sessionUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Content-Length': String(end - start),
-                        'Content-Range': 'bytes ' + start + '-' + (end - 1) + '/' + totalSize
-                    },
-                    body: slice
-                }).then((res) => {
-                    if (res.status === 200 || res.status === 201) {
-                        return res.json(); // aakhri chunk - Drive ne final file metadata (id, etc.) wapas bheja
+                function sendChunk() {
+                    return new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('PUT', sessionUrl, true);
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                        xhr.setRequestHeader('Content-Range', 'bytes ' + start + '-' + (end - 1) + '/' + totalSize);
+                        // Chunk ke andar bhi (jaise-jaise bytes actually network par jaate hain)
+                        // progress update karta hai - is wajah se ab bar dheere-dheere badhega,
+                        // atak kar achanak jump nahi karega.
+                        xhr.upload.onprogress = (e) => {
+                            if (!e.lengthComputable) return;
+                            const uploadedSoFar = start + e.loaded;
+                            onProgress && onProgress(Math.min(99, Math.round((uploadedSoFar / totalSize) * 100)));
+                        };
+                        xhr.onload = () => resolve(xhr);
+                        xhr.onerror = () => reject(new Error('Network error during chunk upload'));
+                        xhr.send(slice);
+                    });
+                }
+
+                return sendChunk().then((xhr) => {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        try { return JSON.parse(xhr.responseText); } // aakhri chunk - Drive ne final file metadata (id, etc.) wapas bheja
+                        catch (e) { throw new Error('Could not parse Drive upload response'); }
                     }
-                    if (res.status === 308) {
+                    if (xhr.status === 308) {
                         onProgress && onProgress(Math.min(99, Math.round((end / totalSize) * 100)));
                         return putChunk(end, 0);
                     }
-                    throw new Error('Upload chunk failed (HTTP ' + res.status + ')');
+                    throw new Error('Upload chunk failed (HTTP ' + xhr.status + ')');
                 }).catch((err) => {
                     if (attempt >= 4) throw err; // 4 retries ke baad bhi fail toh poora upload hi fail maano
                     const delay = Math.min(15000, 1500 * Math.pow(2, attempt));
