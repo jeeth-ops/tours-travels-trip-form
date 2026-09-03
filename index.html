@@ -701,7 +701,6 @@
                     <input type="file" id="carVideoCamInput" accept="video/*" capture="environment" style="display: none;" onchange="setOdometerFile('carVideo', this)">
                     <input type="file" id="carVideoGalInput" accept="video/*" style="display: none;" onchange="setOdometerFile('carVideo', this)">
                     <input type="file" id="carVideoImage" style="display: none;">
-                    <span style="font-size: 11px; color: var(--text-tertiary); display: block; margin-top: 2px;">Trip details turant submit ho jaayenge - video background me apne aap compress hoke upload hoti rahegi, iske liye wait nahi karna padega.</span>
                 </div>
 
                 <!-- Driver Selfie Section -->
@@ -1340,10 +1339,12 @@
                         // speed par record ho. Isliye transcode ka time roughly clip ki apni length
                         // jitna hi lagta hai - safety timeout bhi usi hisaab se set karte hain
                         // (varna lambi clip beech me hi "stuck" maan ke original bhej dega, jo aur
-                        // slow hoga).
+                        // slow hoga). Cap ab zyada generous hai (10 min) kyunki agar tab background
+                        // me chala jaaye (driver dusra tab use karne lage), browser processing ko
+                        // throttle kar sakta hai - isse process expected se zyada time le sakta hai.
                         clearTimeout(safetyTimeout);
                         let duration = isFinite(video.duration) && video.duration > 0 ? video.duration : 20;
-                        safetyTimeout = setTimeout(fallback, Math.min(240000, Math.max(30000, (duration + 12) * 1000)));
+                        safetyTimeout = setTimeout(fallback, Math.min(600000, Math.max(30000, (duration + 12) * 1000 * 3)));
 
                         const canvas = document.createElement('canvas');
                         canvas.width = outW; canvas.height = outH;
@@ -1367,20 +1368,33 @@
                         const chunks = [];
                         recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
 
+                        // FIX: Sirf requestAnimationFrame par depend karne se, jab tab background/
+                        // hidden ho jaata hai (driver dusre tab pe kaam karne lage), browser rAF ko
+                        // bahut heavily throttle kar deta hai (kabhi kabhi almost ruk jaata hai) -
+                        // isse compression atak jaata hai aur timeout hoke fail ho jaata hai. Isliye
+                        // rAF ke saath-saath ek backup setInterval bhi chalate hain jo tab hidden
+                        // hone par bhi (throttled hi sahi, lekin ruk NAHI ke) frames draw karta rahe.
                         let drawHandle = null;
-                        const drawFrame = () => {
+                        let intervalHandle = null;
+                        const drawOnce = () => {
                             if (video.paused || video.ended || settled) return;
                             try { ctx.drawImage(video, 0, 0, outW, outH); } catch (e) {}
+                        };
+                        const drawFrame = () => {
+                            if (video.paused || video.ended || settled) return;
+                            drawOnce();
                             drawHandle = requestAnimationFrame(drawFrame);
                         };
 
                         const stopAndFinalize = () => {
                             if (drawHandle) cancelAnimationFrame(drawHandle);
+                            if (intervalHandle) clearInterval(intervalHandle);
                             if (recorder.state !== 'inactive') { try { recorder.stop(); } catch (e) {} }
                         };
 
                         recorder.onstop = () => {
                             clearTimeout(safetyTimeout);
+                            document.removeEventListener('visibilitychange', onVisibilityChange);
                             if (settled) return;
                             if (!chunks.length) { fallback(); return; }
                             const blob = new Blob(chunks, { type: chosenMime });
@@ -1393,11 +1407,27 @@
                         };
 
                         video.onended = stopAndFinalize;
+                        // NOTE: kuch browsers tab background me hone par video ko khud-ba-khud
+                        // pause bhi kar sakte hain (na ki hamesha end hone par) - us case me
+                        // stopAndFinalize mat karo, balki tab wapas visible hone par resume karo
+                        // (neeche visibilitychange listener me).
                         video.onpause = () => { if (video.ended || settled) stopAndFinalize(); };
+
+                        const onVisibilityChange = () => {
+                            if (!document.hidden && video.paused && !video.ended && !settled) {
+                                video.play().catch(() => {});
+                            }
+                        };
+                        document.addEventListener('visibilitychange', onVisibilityChange);
 
                         recorder.start(250);
                         video.currentTime = 0;
-                        video.play().then(drawFrame).catch(() => { clearTimeout(safetyTimeout); fallback(); });
+                        video.play().then(() => {
+                            drawFrame();
+                            // Backup: rAF background me throttle ho sakta hai, isliye ek dheema
+                            // (~10fps) setInterval bhi chalao jo hidden tab me bhi progress banaye rakhe
+                            intervalHandle = setInterval(drawOnce, 100);
+                        }).catch(() => { clearTimeout(safetyTimeout); fallback(); });
                     } catch (e) {
                         clearTimeout(safetyTimeout);
                         fallback();
