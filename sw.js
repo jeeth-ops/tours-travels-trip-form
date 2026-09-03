@@ -1,7 +1,7 @@
 // Jab bhi bada update karein, VERSION ko badha dena (v14, v15...) - purana cache automatic saaf ho jaayega.
 // v14 = smarter caching: ab CDN libraries (Chart.js, jsPDF, FontAwesome) aur icons bhi cache hote hain,
 // isliye app dobara kholne par almost turant khulti hai, offline par bhi kaam karti hai.
-const VERSION = 'v15';
+const VERSION = 'v17';
 const SHELL_CACHE = 'tours-portal-shell-' + VERSION;
 const RUNTIME_CACHE = 'tours-portal-runtime'; // CDN libraries - version badhne par bhi yeh cache bana rehta hai
 
